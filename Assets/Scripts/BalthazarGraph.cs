@@ -36,6 +36,15 @@ namespace BalthazarGraph {
             neighborCosts = _neighborCosts;
         }
 
+        public int NeighborCount() {
+            int nc = 0;
+            for ( int i = 0; i < 6; i++ ) {
+                if ( hasNeighbor[i] )
+                    nc++;
+            }
+            return nc;
+        }
+
         //Adds an edge between this node and n, with a custom weight
         public void ConnectTo (Node n, nodeDir direction, float weight) {
             hasNeighbor[(int)direction] = true;
@@ -53,6 +62,27 @@ namespace BalthazarGraph {
         public void ConnectTo (Node n, nodeDir direction) {
             ConnectTo (n, direction, 0f);
         }
+
+        //equals operator
+        public static bool operator ==(Node n1, Node n2) {
+            return n1.nodeID == n2.nodeID;
+        }
+
+        //not equals operator
+        public static bool operator !=(Node n1, Node n2) {
+            return !(n1==n2);
+        }
+
+        //code to get rid of warnings on not overriding Object.Equals and Object.GetHashCode
+        public override bool Equals(object obj)
+        {
+            if ( obj is Node node) {
+                return this == node;
+            }
+            return false;
+        }
+
+        public override int GetHashCode() => new {nodeID}.GetHashCode();
     }
 
     public struct PotentialNode {
@@ -175,6 +205,54 @@ namespace BalthazarGraph {
             nodes.Add(n);
         }
 
+        //deletes node by ID
+        public void DeleteNode(int nodeID) {
+            DeleteNode(GetNodeFromID(nodeID));
+        }
+
+        //deletes node by Node
+        public void DeleteNode(Node n) {
+            for ( int i = 0; i < 6; i++ ) {
+                if ( n.hasNeighbor[i] == true ) {
+                    DeleteEdge(n, n.neighbors[i], true);
+                }
+            }
+            
+            nodes.Remove(n);
+        }
+
+        //delete edge between two nodes
+        //noDeleteN1 makes sure the first node isn't deleted, as to prevent recursion when this function gets called from DeleteNode()
+        public void DeleteEdge(Node n1, Node n2, bool keepn1) {
+            bool foundEdge = false;
+            int i;
+            for ( i = 0; i < 6 && !foundEdge; i++ ) {
+                if ( n1.neighbors[i] == n2 ) {
+                    foundEdge = true;
+                }
+            }
+
+            if ( !foundEdge ) {
+                Debug.LogError("There is no connection between " + n1.nodeID.ToString() + " and " + n2.nodeID.ToString() + "!!!" );
+                return;
+            }
+
+            n1.hasNeighbor[i] = false;
+            n1.neighborCosts[i] = 0;
+            if ( n1.NeighborCount() == 0 && !keepn1 )
+                DeleteNode(n1);
+
+            n2.hasNeighbor[(int)Opposite((nodeDir)i)] = false;
+            n2.neighborCosts[(int)Opposite((nodeDir)i)] = 0;
+            if ( n2.NeighborCount() == 0 )
+                DeleteNode(n2);
+        }
+
+        //delete edge between two nodes via int
+        public void DeleteEdge(int n1_ID, int n2_ID, bool keepn1) {
+            DeleteEdge(GetNodeFromID(n1_ID), GetNodeFromID(n2_ID), keepn1);
+        }
+
         //Adds a new potential node
         //TODO: check if pnode already exists
         public void AddPotentialNode(Node n, nodeDir dir) {
@@ -186,8 +264,7 @@ namespace BalthazarGraph {
             potentialNodes.Add(pn);
         }
 
-        //Adds a new potential node
-        //TODO: check if pnode already exists
+        //Adds a new potential node via nodeID
         public void AddPotentialNode(int nodeID, nodeDir dir) {
             AddPotentialNode(GetNodeFromID(nodeID), dir);
         }
@@ -206,6 +283,7 @@ namespace BalthazarGraph {
             return nodes[nodeID];
         }
 
+        //get a PotentialNode from an int ID
         public PotentialNode GetPotentialNodeFromID(int pnodeID) {
             return potentialNodes[pnodeID];
         }
