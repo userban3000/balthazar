@@ -179,6 +179,38 @@ namespace BalthazarGraph {
             }
             neighborCount = nodesAroundPNode;
         }
+    
+        //equals operator
+        //basically if its connected to all the same nodes
+        public static bool operator == (PotentialNode n1, PotentialNode n2) {
+            int match = 0;
+            for ( int i = 0; i < 6; i++ ) {
+                if ( n1.hasNeighbor[i] && n2.hasNeighbor[i] ) {
+                    if ( n1.neighbors[i] == n2.neighbors[i] ) {
+                        match++;
+                    }
+                } else if ( n1.hasNeighbor[i] == n2.hasNeighbor[i] ) {
+                    match++;
+                }
+            }
+            return match == 6;
+        }
+
+        //not equals operator
+        public static bool operator != (PotentialNode n1, PotentialNode n2) {
+            return !(n1==n2);
+        }
+
+        //code to get rid of warnings on not overriding Object.Equals and Object.GetHashCode
+        public override bool Equals(object obj)
+        {
+            if ( obj is PotentialNode pNode) {
+                return this == pNode;
+            }
+            return false;
+        }
+
+        public override int GetHashCode() => new {pNodeID}.GetHashCode();
     }
 
     public struct Graph {
@@ -205,6 +237,11 @@ namespace BalthazarGraph {
             nodes.Add(n);
         }
 
+        //Adds a preconfigured node
+        public void AddNode(Node n) {
+            nodes.Add(n);
+        }
+
         //deletes node by ID
         public void DeleteNode(int nodeID) {
             DeleteNode(GetNodeFromID(nodeID));
@@ -222,21 +259,23 @@ namespace BalthazarGraph {
         }
 
         //delete edge between two nodes
-        //noDeleteN1 makes sure the first node isn't deleted, as to prevent recursion when this function gets called from DeleteNode()
+        //keepn1 makes sure the first node isn't deleted, as to prevent recursion when this function gets called from DeleteNode()
         public void DeleteEdge(Node n1, Node n2, bool keepn1) {
             bool foundEdge = false;
             int i;
             for ( i = 0; i < 6 && !foundEdge; i++ ) {
-                if ( n1.neighbors[i] == n2 ) {
+                if ( n1.neighbors[i] == n2 && n1.hasNeighbor[i] ) {
                     foundEdge = true;
                 }
             }
 
+            i--;
+
             if ( !foundEdge ) {
-                Debug.LogError("There is no connection between " + n1.nodeID.ToString() + " and " + n2.nodeID.ToString() + "!!!" );
+                Debug.LogError("Edge deletion between " + n1.nodeID.ToString() + " and " + n2.nodeID.ToString() + " failed! There is no such connection." );
                 return;
             }
-
+            
             n1.hasNeighbor[i] = false;
             n1.neighborCosts[i] = 0;
             if ( n1.NeighborCount() == 0 && !keepn1 )
@@ -253,14 +292,30 @@ namespace BalthazarGraph {
             DeleteEdge(GetNodeFromID(n1_ID), GetNodeFromID(n2_ID), keepn1);
         }
 
+        //delete edge between two nodes via int, with default unsafe behaviour
+        public void DeleteEdge(int n1_ID, int n2_ID) {
+            DeleteEdge(GetNodeFromID(n1_ID), GetNodeFromID(n2_ID), false);
+        }
+
         //Adds a new potential node
-        //TODO: check if pnode already exists
         public void AddPotentialNode(Node n, nodeDir dir) {
             PotentialNode pn = new PotentialNode(0);
             pn.pNodeID = potentialNodes.Count;
             pn.hasNeighbor[(int)Opposite(dir)] = true;
             pn.neighbors[(int)Opposite(dir)] = n;
             pn.HexPotentialNode();
+
+            bool alreadyExists = false;
+            foreach ( PotentialNode otherpn in potentialNodes ) {
+                if ( otherpn == pn )
+                    alreadyExists = true;
+            }
+
+            if ( alreadyExists ) {
+                Debug.LogWarning("Tried to add a PotentialNode that already exists. The operation was canceled.");
+                return;
+            }
+
             potentialNodes.Add(pn);
         }
 
@@ -275,7 +330,77 @@ namespace BalthazarGraph {
 
             LinkNodes(0, 1, nodeDir.UR);
             LinkNodes(1, 2, nodeDir.DR);
-            LinkNodes(2, 0, nodeDir.L);           
+            LinkNodes(2, 0, nodeDir.L);
+
+            AddPotentialNode(0, nodeDir.UL);
+            AddPotentialNode(1, nodeDir.R);
+            AddPotentialNode(2, nodeDir.DL);
+        }
+
+        //finds a potential node from a given nodeID and direction
+        public int FindPotentialNode(int nodeID, nodeDir dir) {
+            return FindPotentialNode(GetNodeFromID(nodeID), dir);
+        }
+
+        //finds a potential node from a given node and direction
+        //returns its position in the potentialNodes list
+        public int FindPotentialNode(Node n, nodeDir dir) {
+            bool found = false;
+            int k;
+
+            for ( k = 0; k < potentialNodes.Count && !found; k++ ) {
+                found = potentialNodes[k].neighbors[(int)Opposite(dir)] == n && potentialNodes[k].hasNeighbor[(int)Opposite(dir)];
+            }
+
+            if (!found) {
+                string[] dirNames = nodeDir.GetNames(typeof(nodeDir));
+                Debug.LogError("Fatal Error: there is no Potential Node from " + n.nodeID + ", facing " + dirNames[(int)dir] + ". A dummy value will be shown." );
+                return 0;
+            }
+
+            return k - 1;
+        }
+
+        //turns a potential node into a node found by ID
+        public void MaterializePotentialNode(int nodeID, nodeDir dir) {
+            MaterializePotentialNode(GetNodeFromID(nodeID), dir);
+        }
+
+        //turns a potential node into a node
+        public void MaterializePotentialNode(Node n, nodeDir dir) {
+            int pnIndex = FindPotentialNode(n, dir);
+            PotentialNode pn = potentialNodes[pnIndex];
+            potentialNodes.Remove(pn);
+
+            Node newNode = new Node(nodes.Count);
+
+            int fpn, lpn;
+            fpn = lpn = -1;
+
+            for ( int i = 0; i < 6; i++ ) {
+                if ( pn.hasNeighbor[i] ) {
+                    LinkNodes(newNode, pn.neighbors[i], (nodeDir)i );
+                    if ( !pn.hasNeighbor[(int)Next((nodeDir)i)] ) {
+                        lpn = (int)Next((nodeDir)i);
+                    }
+                    if ( fpn == -1 ) {
+                        if ( !pn.hasNeighbor[(int)Prev((nodeDir)i)] ) {
+                            fpn = (int)Prev((nodeDir)i);
+                        }
+                    }
+                }
+            }
+
+            AddNode(newNode);
+
+            foreach ( PotentialNode allPn in potentialNodes ) {
+                allPn.HexPotentialNode();
+            }
+
+            if ( fpn != -1 )
+                AddPotentialNode(newNode, (nodeDir)fpn);
+            if ( lpn != -1 )
+                AddPotentialNode(newNode, (nodeDir)lpn);
         }
 
         //get a Node from an int ID
@@ -318,56 +443,36 @@ namespace BalthazarGraph {
             return (int)direction < 5 ? ( direction + 1 ) : ( direction - 5 );
         }
 
+        //prev direction required to run a full hexagon backwards (ccw)
+        public nodeDir Prev(nodeDir direction) {
+            return (int)direction < 1 ? ( direction + 5 ) : ( direction - 1 );
+        }
+
         //converts an outward direction from an inner node to the direction it has to start following for traversing all of the nodes in its hex
         public nodeDir OutToSideways(nodeDir direction) {
             return (int)direction < 4 ? ( direction + 2 ) : ( direction - 4 );
         }
 
-        //Connects a p-node to all nodes on it hex, then returns how many nodes are there
-        public void HexPotentialNode(int pNodeID) {
-            PotentialNode pn = GetPotentialNodeFromID(pNodeID);
-            bool[] visited = new bool[6];
-            int nodesAroundPNode = 0;
-            for ( int i = 0; i < 6; i++ ) {
-                if ( pn.hasNeighbor[i] ) {
-                    visited[i] = true;
-                    nodesAroundPNode++;
-
-                    Node visitedNode = pn.neighbors[i];
-                    nodeDir nextDir = OutToSideways((nodeDir)i);
-                    bool nextExists = visitedNode.hasNeighbor[(int)nextDir];
-
-                    while ( nextExists ) {
-                        nodesAroundPNode++;
-                        visitedNode = visitedNode.neighbors[(int)nextDir];
-                        if ( !visited[++i] ) {
-                            pn.hasNeighbor[i] = true;
-                            pn.neighbors[i] = visitedNode;
-                            visited[i] = true;
-                        }
-                        nextDir = Next(nextDir);
-                        nextExists = visitedNode.hasNeighbor[(int)nextDir];
-                    }
-                }
-            }
-            pn.neighborCount = nodesAroundPNode;
-            //theres gotta be a better way to do this
-            potentialNodes[pNodeID] = pn;
+        //Prints the graph to console with no pnodes by default
+        public void DebugPrintGraph() {
+            DebugPrintGraph(false);
         }
 
         //Prints the graph to console
-        public void DebugPrintGraph() {
-            string graphText = null;
+        public void DebugPrintGraph(bool inclPotential) {
+            
+            Debug.Log("===== PRINTING GRAPH =====");
+
             for ( int i = 0; i < nodes.Count; i++ ) {
-                Node n = GetNodeFromID(i);
-                graphText = graphText + n.nodeID.ToString() + ": ";
-                for ( int j = 0; j < 6; j++ ) {
-                    if ( n.hasNeighbor[j] )
-                        graphText = graphText + n.neighbors[j].nodeID.ToString() + ", ";
-                }
-                Debug.Log(graphText);
-                graphText = null;
+                DebugPrintNeighbors(i);
             }
+
+            if ( inclPotential ) {
+                for ( int i = 0; i < potentialNodes.Count; i++ ) {
+                    DebugPrintPnodeNeighbors(i);
+                }
+            }
+            Debug.Log("=== END PRINTING GRAPH ===");
         }
 
         //Prints all of a node's neighbors to console

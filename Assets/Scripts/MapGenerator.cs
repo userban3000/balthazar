@@ -11,17 +11,12 @@ public class MapGenerator : MonoBehaviour {
     private void Start() {
         g.GenerateFirstTriangle();
 
-        g.AddNodes(4);
+        g.MaterializePotentialNode(0, nodeDir.UL);
+        g.MaterializePotentialNode(0, nodeDir.L);
+        g.MaterializePotentialNode(2, nodeDir.DL);
+        g.MaterializePotentialNode(0, nodeDir.DL);
 
-        g.LinkNodes(1, 3, nodeDir.UL);
-        g.LinkNodes(3, 4, nodeDir.L);
-        g.LinkNodes(4, 5, nodeDir.DL);
-        g.LinkNodes(5, 6, nodeDir.DR);
-        g.LinkNodes(6, 0, nodeDir.R);
-
-        g.AddPotentialNode(0, nodeDir.UL);
-
-        g.DebugPrintPnodeNeighbors(0);
+        g.DebugPrintGraph(true);
     }
 
 }
