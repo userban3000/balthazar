@@ -216,11 +216,13 @@ namespace BalthazarGraph {
     public struct Graph {
         public List<Node> nodes;
         public List<PotentialNode> potentialNodes;
+        private int nodeCount;
 
         //Graph constructor
         public Graph (List<Node> _nodes, List<PotentialNode> _potentialNodes) {
             nodes = _nodes;
             potentialNodes = _potentialNodes;
+            nodeCount = 0;
         }
 
         //Adds a custom amount of nodes
@@ -233,7 +235,7 @@ namespace BalthazarGraph {
         //Adds one new node
         public void AddNode() {
             Node n = new Node(0);       //have to construct it with a parameter bcs parameterless gives errors. weird.
-            n.nodeID = nodes.Count;     //i change the nodeID here anyways so it doesnt really matter.
+            n.nodeID = nodeCount++;     //i change the nodeID here anyways so it doesnt really matter.
             nodes.Add(n);
         }
 
@@ -251,16 +253,19 @@ namespace BalthazarGraph {
         public void DeleteNode(Node n) {
             for ( int i = 0; i < 6; i++ ) {
                 if ( n.hasNeighbor[i] == true ) {
-                    DeleteEdge(n, n.neighbors[i], true);
+                    DeleteEdge(n, n.neighbors[i]);
                 }
             }
-            
+        }
+
+        //fully removes node
+        public void ShredNode(Node n) {
             nodes.Remove(n);
         }
 
         //delete edge between two nodes
         //keepn1 makes sure the first node isn't deleted, as to prevent recursion when this function gets called from DeleteNode()
-        public void DeleteEdge(Node n1, Node n2, bool keepn1) {
+        public void DeleteEdge(Node n1, Node n2) {
             bool foundEdge = false;
             int i;
             for ( i = 0; i < 6 && !foundEdge; i++ ) {
@@ -278,23 +283,18 @@ namespace BalthazarGraph {
             
             n1.hasNeighbor[i] = false;
             n1.neighborCosts[i] = 0;
-            if ( n1.NeighborCount() == 0 && !keepn1 )
-                DeleteNode(n1);
+            if ( n1.NeighborCount() == 0 )
+                ShredNode(n1);
 
             n2.hasNeighbor[(int)Opposite((nodeDir)i)] = false;
             n2.neighborCosts[(int)Opposite((nodeDir)i)] = 0;
             if ( n2.NeighborCount() == 0 )
-                DeleteNode(n2);
+                ShredNode(n2);
         }
 
         //delete edge between two nodes via int
-        public void DeleteEdge(int n1_ID, int n2_ID, bool keepn1) {
-            DeleteEdge(GetNodeFromID(n1_ID), GetNodeFromID(n2_ID), keepn1);
-        }
-
-        //delete edge between two nodes via int, with default unsafe behaviour
         public void DeleteEdge(int n1_ID, int n2_ID) {
-            DeleteEdge(GetNodeFromID(n1_ID), GetNodeFromID(n2_ID), false);
+            DeleteEdge(GetNodeFromID(n1_ID), GetNodeFromID(n2_ID));
         }
 
         //Adds a new potential node
@@ -354,8 +354,9 @@ namespace BalthazarGraph {
 
             if (!found) {
                 string[] dirNames = nodeDir.GetNames(typeof(nodeDir));
-                Debug.LogError("Fatal Error: there is no Potential Node from " + n.nodeID + ", facing " + dirNames[(int)dir] + ". A dummy value will be shown." );
-                return 0;
+                Debug.LogError("FATAL ERROR: there is no Potential Node starting from " + n.nodeID + ", going " + dirNames[(int)dir] + ". No new nodes have been created. Code: PNODE_NOT_FOUND" );
+                Debug.LogWarning("The error above can result in cascading errors. Fix before attempting to generate Graph.");
+                return -1;
             }
 
             return k - 1;
@@ -369,10 +370,13 @@ namespace BalthazarGraph {
         //turns a potential node into a node
         public void MaterializePotentialNode(Node n, nodeDir dir) {
             int pnIndex = FindPotentialNode(n, dir);
+            if ( pnIndex == -1 ) {
+                return;
+            }
             PotentialNode pn = potentialNodes[pnIndex];
             potentialNodes.Remove(pn);
 
-            Node newNode = new Node(nodes.Count);
+            Node newNode = new Node(nodeCount++);
 
             int fpn, lpn;
             fpn = lpn = -1;
@@ -405,7 +409,14 @@ namespace BalthazarGraph {
 
         //get a Node from an int ID
         public Node GetNodeFromID (int nodeID) {
-            return nodes[nodeID];
+
+            foreach ( Node n in nodes ) {
+                if ( n.nodeID == nodeID )
+                    return n;
+            } 
+
+            Debug.LogError("Node with ID " + nodeID + " does not exist in the current Graph. Any Nodes that appear as '-1' are a cause of this.");
+            return new Node(-1);
         }
 
         //get a PotentialNode from an int ID
@@ -463,25 +474,23 @@ namespace BalthazarGraph {
             
             Debug.Log("===== PRINTING GRAPH =====");
 
-            for ( int i = 0; i < nodes.Count; i++ ) {
-                DebugPrintNeighbors(i);
-            }
+            foreach ( Node n in nodes )
+                DebugPrintNeighbors(n);
 
             if ( inclPotential ) {
-                for ( int i = 0; i < potentialNodes.Count; i++ ) {
-                    DebugPrintPnodeNeighbors(i);
+                foreach ( PotentialNode pn in potentialNodes ) {
+                    DebugPrintPnodeNeighbors(pn);
                 }
             }
             Debug.Log("=== END PRINTING GRAPH ===");
         }
 
         //Prints all of a node's neighbors to console
-        public void DebugPrintPnodeNeighbors(int pnodeID) {
-            PotentialNode pn = GetPotentialNodeFromID(pnodeID);
+        public void DebugPrintPnodeNeighbors(PotentialNode pn) {
 
             string[] dirNames = nodeDir.GetNames(typeof(nodeDir));
 
-            string nodeText = "Potential Node: " + pnodeID.ToString() + " | ";
+            string nodeText = "Potential Node | ";
             for ( int i = 0; i < 6; i++ ) {
                 if ( pn.hasNeighbor[i] ) {
                     nodeText += dirNames[i] + ": " + pn.neighbors[i].nodeID.ToString() + ", ";
@@ -494,9 +503,17 @@ namespace BalthazarGraph {
         public void DebugPrintNeighbors(int nodeID) {
             Node n = GetNodeFromID(nodeID);
 
+            if ( n.nodeID == -1 ) 
+                return;
+            else
+                DebugPrintNeighbors(n);
+        }
+
+        //Prints all of a node's neighbors to console
+        public void DebugPrintNeighbors(Node n) {
             string[] dirNames = nodeDir.GetNames(typeof(nodeDir));
 
-            string nodeText = "Node: " + nodeID.ToString() + " | ";
+            string nodeText = "Node: " + n.nodeID.ToString() + " | ";
             for ( int i = 0; i < 6; i++ ) {
                 if ( n.hasNeighbor[i] ) {
                     nodeText += dirNames[i] + ": " + n.neighbors[i].nodeID.ToString() + ", ";
