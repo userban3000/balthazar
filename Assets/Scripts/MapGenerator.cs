@@ -17,12 +17,7 @@ public class MapGenerator : MonoBehaviour {
 
         g.GenerateFirstTriangle();
 
-        g.MaterializePotentialNode(0, nodeDir.UL);
-        g.MaterializePotentialNode(0, nodeDir.L);
-        g.MaterializePotentialNode(0, nodeDir.DR);
-        g.MaterializePotentialNode(0, nodeDir.DL);
-
-        g.DebugPrintGraph();
+        g.DebugPrintGraph(true);
     }
 
 }
