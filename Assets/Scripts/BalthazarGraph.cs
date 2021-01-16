@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 //custom graph system for triangular diamond graphs
@@ -279,9 +280,11 @@ namespace BalthazarGraph {
         }
 
         //Graph constructor
-        public Graph (List<Node> _nodes, List<PotentialNode> _potentialNodes) {
-            nodes = _nodes;
-            potentialNodes = _potentialNodes;
+        //set the seed to 0 for a random one
+        public Graph (int seed) {
+            Random.InitState(seed);
+            nodes = new List<Node>();
+            potentialNodes = new List<PotentialNode>();
             nodeCount = 0;
         }
 
@@ -473,7 +476,7 @@ namespace BalthazarGraph {
 
             for ( int i = 0; i < 6; i++ ) {
                 if ( pn.hasNeighbor[i] ) {
-                    LinkNodes(ref pn.neighbors[i], ref newNode, (nodeDir)i );
+                    LinkNodes(ref pn.neighbors[i], ref newNode, Opposite((nodeDir)i) );
                     if ( !pn.hasNeighbor[(int)Next((nodeDir)i)] ) {
                         lpn = (int)Next((nodeDir)i);
                     }
@@ -559,15 +562,14 @@ namespace BalthazarGraph {
         }
 
         //returns an array of possible potential nodes to materialize next
-        public PotentialNode PickPotentialNode(pickMode mode) {
+        public Coord PickPotentialNode(pickMode mode) {
             List<PotentialNode> pnList = new List<PotentialNode>();
             int minCon = 7;
             int maxCon = 0;
             if ( mode != pickMode.Random ) {
                 foreach (PotentialNode pn in potentialNodes) {
-                    Debug.Log("neighbour count" + pn.neighborCount.ToString());
-                    minCon = Mathf.Min(minCon, pn.neighborCount);
-                    maxCon = Mathf.Max(maxCon, pn.neighborCount);
+                    minCon = Mathf.Min(minCon, pn.GetNeighborCount());
+                    maxCon = Mathf.Max(maxCon, pn.GetNeighborCount());
                 }
             }
 
@@ -575,14 +577,14 @@ namespace BalthazarGraph {
             switch (mode) {
                 case pickMode.Structural:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.neighborCount == maxCon ) {
+                        if ( pn.GetNeighborCount() == maxCon ) {
                             pnList.Add(pn);
                         }
                     }
                     break;
                 case pickMode.SemiStructural:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.neighborCount >= maxCon - Random01Weighted(60,40) ) {
+                        if ( pn.GetNeighborCount() >= maxCon - Random01Weighted(60,40) ) {
                             pnList.Add(pn);
                         }
                     }
@@ -592,20 +594,20 @@ namespace BalthazarGraph {
                     break;
                 case pickMode.SemiChaotic:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.neighborCount <= minCon + Random01Weighted(60,40) ) {
+                        if ( pn.GetNeighborCount() <= minCon + Random01Weighted(60,40) ) {
                             pnList.Add(pn);
                         }
                     }
                     break;
                 case pickMode.Chaotic:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.neighborCount == minCon ) {
+                        if ( pn.GetNeighborCount() == minCon ) {
                             pnList.Add(pn);
                         }
                     }
                     break;
             }
-            return pnList[Random.Range(0, pnList.Count)];
+            return pnList[Random.Range(0, pnList.Count)].coord;
         }
 
         //Prints the graph to console with no pnodes by default
@@ -616,6 +618,8 @@ namespace BalthazarGraph {
         //Prints the graph to console
         public void DebugPrintGraph(bool inclPotential) {
             
+            ClearLog();
+
             Debug.Log("===== PRINTING GRAPH =====");
 
             foreach ( Node n in nodes )
@@ -666,6 +670,15 @@ namespace BalthazarGraph {
             }
             nodeText += "| (" + n.coord.x.ToString() + ", " + n.coord.y.ToString() + ")";
             Debug.Log(nodeText);
+        }
+
+        //clears editor console
+        //thank you, anonymous stackoverflow user!
+        public void ClearLog() {
+            var assembly = Assembly.GetAssembly(typeof(UnityEditor.Editor));
+            var type = assembly.GetType("UnityEditor.LogEntries");
+            var method = type.GetMethod("Clear");
+            method.Invoke(new object(), null);
         }
 
     }
