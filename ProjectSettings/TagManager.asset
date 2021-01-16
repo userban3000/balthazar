@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - UI Unit Count
+  - Star System
+  - Connection
   layers:
   - Default
   - TransparentFX

@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 
 //custom graph system for triangular diamond graphs
@@ -10,8 +9,8 @@ namespace BalthazarGraph {
 //===================================================ENUMS===================================================
 
     //up right, right, down right, down left, left, up left
-    public enum nodeDir {UR, R, DR, DL, L, UL};
-    public enum pickMode {Structural, SemiStructural, Random, SemiChaotic, Chaotic};
+    public enum NodeDir {UR, R, DR, DL, L, UL};
+    public enum PickMode {Crystal, Structured, Arranged, Indifferent, Shattered, Chaotic, Tentacular};
 
 //===================================================COORD===================================================
 
@@ -50,8 +49,7 @@ namespace BalthazarGraph {
         }
 
         //code to get rid of warnings on not overriding Object.Equals and Object.GetHashCode
-        public override bool Equals(object obj)
-        {
+        public override bool Equals(object obj) {
             if ( obj is Coord c) {
                 return this == c;
             }
@@ -72,19 +70,19 @@ namespace BalthazarGraph {
         public float[] neighborCosts;
 
         //get coord delta from a nodedir
-        public Coord CoordFromNodeDir (nodeDir dir) {
+        public Coord CoordFromNodeDir (NodeDir dir) {
             switch (dir) {
-                case nodeDir.UR:
+                case NodeDir.UR:
                     return Coord.UR;
-                case nodeDir.R:
+                case NodeDir.R:
                     return Coord.R; 
-                case nodeDir.DR:
+                case NodeDir.DR:
                     return Coord.DR;
-                case nodeDir.DL:
+                case NodeDir.DL:
                     return Coord.DL;
-                case nodeDir.L:
+                case NodeDir.L:
                     return Coord.L;
-                case nodeDir.UL:
+                case NodeDir.UL:
                     return Coord.UL;
                 default:
                     return Coord.Zero;
@@ -92,7 +90,7 @@ namespace BalthazarGraph {
         }
 
         //opposite of direction
-        public nodeDir Opposite(nodeDir direction) {
+        public NodeDir Opposite(NodeDir direction) {
             return (int)direction < 3 ? ( direction + 3 ) : ( direction - 3 );
         }
 
@@ -124,12 +122,12 @@ namespace BalthazarGraph {
         }
 
         //Adds an edge between this node and n, with a custom weight
-        public void ConnectTo (Node n, nodeDir direction, float weight) {
+        public void ConnectTo (Node n, NodeDir direction, float weight) {
             hasNeighbor[(int)direction] = true;
             neighbors[(int)direction] = n;
             neighborCosts[(int)direction] = weight;
 
-            nodeDir opposite = Opposite(direction);
+            NodeDir opposite = Opposite(direction);
 
             n.coord = this.coord + CoordFromNodeDir(direction);
             n.hasNeighbor[(int)opposite] = true;
@@ -138,7 +136,7 @@ namespace BalthazarGraph {
         }
 
         //Adds an edge between this node and n, with a weight of 0
-        public void ConnectTo (Node n, nodeDir direction) {
+        public void ConnectTo (Node n, NodeDir direction) {
             ConnectTo (n, direction, 0f);
         }
 
@@ -173,19 +171,19 @@ namespace BalthazarGraph {
         public Node[] neighbors;
 
         //get coord delta from a nodedir
-        public Coord CoordFromNodeDir (nodeDir dir) {
+        public Coord CoordFromNodeDir (NodeDir dir) {
             switch (dir) {
-                case nodeDir.UR:
+                case NodeDir.UR:
                     return Coord.UR;
-                case nodeDir.R:
+                case NodeDir.R:
                     return Coord.R; 
-                case nodeDir.DR:
+                case NodeDir.DR:
                     return Coord.DR;
-                case nodeDir.DL:
+                case NodeDir.DL:
                     return Coord.DL;
-                case nodeDir.L:
+                case NodeDir.L:
                     return Coord.L;
-                case nodeDir.UL:
+                case NodeDir.UL:
                     return Coord.UL;
                 default:
                     return Coord.Zero;
@@ -211,22 +209,22 @@ namespace BalthazarGraph {
         }
 
         //next direction required to run a full hexagon
-        public nodeDir Next(nodeDir direction) {
+        public NodeDir Next(NodeDir direction) {
             return (int)direction < 5 ? ( direction + 1 ) : ( direction - 5 );
         }
 
         //prev direction required to run a full hexagon
-        public nodeDir Prev(nodeDir direction) {
+        public NodeDir Prev(NodeDir direction) {
             return (int)direction < 1 ? ( direction + 5 ) : ( direction - 1 );
         }
 
         //converts an outward direction from an inner node to the direction it has to start following for traversing all of the nodes in its hex
-        public nodeDir OutToSideways(nodeDir direction) {
+        public NodeDir OutToSideways(NodeDir direction) {
             return (int)direction < 4 ? ( direction + 2 ) : ( direction - 4 );
         }
 
         //opposite of direction
-        public nodeDir Opposite(nodeDir direction) {
+        public NodeDir Opposite(NodeDir direction) {
             return (int)direction < 3 ? ( direction + 3 ) : ( direction - 3 );
         }
     
@@ -260,19 +258,19 @@ namespace BalthazarGraph {
         public List<PotentialNode> potentialNodes;
         private int nodeCount;
 
-        public Coord CoordFromNodeDir (nodeDir dir) {
+        public Coord CoordFromNodeDir (NodeDir dir) {
             switch (dir) {
-                case nodeDir.UR:
+                case NodeDir.UR:
                     return Coord.UR;
-                case nodeDir.R:
+                case NodeDir.R:
                     return Coord.R; 
-                case nodeDir.DR:
+                case NodeDir.DR:
                     return Coord.DR;
-                case nodeDir.DL:
+                case NodeDir.DL:
                     return Coord.DL;
-                case nodeDir.L:
+                case NodeDir.L:
                     return Coord.L;
-                case nodeDir.UL:
+                case NodeDir.UL:
                     return Coord.UL;
                 default:
                     return Coord.Zero;
@@ -349,8 +347,8 @@ namespace BalthazarGraph {
             if ( n1.NeighborCount() == 0 )
                 ShredNode(n1);
 
-            n2.hasNeighbor[(int)Opposite((nodeDir)i)] = false;
-            n2.neighborCosts[(int)Opposite((nodeDir)i)] = 0;
+            n2.hasNeighbor[(int)Opposite((NodeDir)i)] = false;
+            n2.neighborCosts[(int)Opposite((NodeDir)i)] = 0;
             if ( n2.NeighborCount() == 0 )
                 ShredNode(n2);
         }
@@ -386,7 +384,7 @@ namespace BalthazarGraph {
         public PotentialNode HexPotentialNode(PotentialNode pn) {
             pn.neighborCount = 0;
             for ( int i = 0; i < 6; i++ ) {
-                Coord check = pn.coord + CoordFromNodeDir((nodeDir)i);
+                Coord check = pn.coord + CoordFromNodeDir((NodeDir)i);
                 if ( FindNodeAtCoord(check, out Node n) ) {
                     pn.hasNeighbor[i] = true;
                     pn.neighborCount++;
@@ -397,7 +395,7 @@ namespace BalthazarGraph {
         }
 
         //Adds a new potential node
-        public void AddPotentialNode(Node n, nodeDir dir) {
+        public void AddPotentialNode(Node n, NodeDir dir) {
             PotentialNode pn = new PotentialNode(0);
             pn.coord = n.coord + CoordFromNodeDir(dir);
             
@@ -417,7 +415,7 @@ namespace BalthazarGraph {
         }
 
         //Adds a new potential node via nodeID
-        public void AddPotentialNode(int nodeID, nodeDir dir) {
+        public void AddPotentialNode(int nodeID, NodeDir dir) {
             AddPotentialNode(nodes[nodeID], dir);
         }
 
@@ -425,22 +423,22 @@ namespace BalthazarGraph {
         public void GenerateFirstTriangle () {
             AddNodes(3);
 
-            LinkNodes(0, 1, nodeDir.UR);
-            LinkNodes(1, 2, nodeDir.DR);
-            LinkNodes(0, 2, nodeDir.R);
+            LinkNodes(0, 1, NodeDir.UR);
+            LinkNodes(1, 2, NodeDir.DR);
+            LinkNodes(0, 2, NodeDir.R);
 
-            AddPotentialNode(0, nodeDir.UL);
-            AddPotentialNode(1, nodeDir.R);
-            AddPotentialNode(2, nodeDir.DL);
+            AddPotentialNode(0, NodeDir.UL);
+            AddPotentialNode(1, NodeDir.R);
+            AddPotentialNode(2, NodeDir.DL);
         }
 
         //finds a potential node from a given nodeID and direction
-        public PotentialNode FindPotentialNode(int nodeID, nodeDir dir) {
+        public PotentialNode FindPotentialNode(int nodeID, NodeDir dir) {
             return FindPotentialNode(nodes[nodeID].coord + CoordFromNodeDir(dir));
         }
 
         //finds a potential node from a given node and direction
-        public PotentialNode FindPotentialNode(Node n, nodeDir dir) {
+        public PotentialNode FindPotentialNode(Node n, NodeDir dir) {
             return FindPotentialNode(n.coord + CoordFromNodeDir(dir));
         }
 
@@ -455,12 +453,12 @@ namespace BalthazarGraph {
         }
 
         //turns a potential node into a node found by ID
-        public void MaterializePotentialNode(int nodeID, nodeDir dir) {
+        public void MaterializePotentialNode(int nodeID, NodeDir dir) {
             MaterializePotentialNode(nodes[nodeID].coord + CoordFromNodeDir(dir));
         }
 
         //turns a potential node into a node
-        public void MaterializePotentialNode(Node n, nodeDir dir) {
+        public void MaterializePotentialNode(Node n, NodeDir dir) {
             MaterializePotentialNode(n.coord + CoordFromNodeDir(dir));
         }
 
@@ -476,13 +474,13 @@ namespace BalthazarGraph {
 
             for ( int i = 0; i < 6; i++ ) {
                 if ( pn.hasNeighbor[i] ) {
-                    LinkNodes(ref pn.neighbors[i], ref newNode, Opposite((nodeDir)i) );
-                    if ( !pn.hasNeighbor[(int)Next((nodeDir)i)] ) {
-                        lpn = (int)Next((nodeDir)i);
+                    LinkNodes(ref pn.neighbors[i], ref newNode, Opposite((NodeDir)i) );
+                    if ( !pn.hasNeighbor[(int)Next((NodeDir)i)] ) {
+                        lpn = (int)Next((NodeDir)i);
                     }
                     if ( fpn == -1 ) {
-                        if ( !pn.hasNeighbor[(int)Prev((nodeDir)i)] ) {
-                            fpn = (int)Prev((nodeDir)i);
+                        if ( !pn.hasNeighbor[(int)Prev((NodeDir)i)] ) {
+                            fpn = (int)Prev((NodeDir)i);
                         }
                     }
                 }
@@ -496,13 +494,13 @@ namespace BalthazarGraph {
             }
 
             if ( fpn != -1 )
-                AddPotentialNode(newNode, (nodeDir)fpn);
+                AddPotentialNode(newNode, (NodeDir)fpn);
             if ( lpn != -1 )
-                AddPotentialNode(newNode, (nodeDir)lpn);
+                AddPotentialNode(newNode, (NodeDir)lpn);
         }
 
         //Links nodes
-        public void LinkNodes(int n1id, int n2id, nodeDir n2_RelativeTo_n1) {
+        public void LinkNodes(int n1id, int n2id, NodeDir n2_RelativeTo_n1) {
             Node n1 = nodes[n1id];
             Node n2 = nodes[n2id];
             LinkNodes(ref n1, ref n2, n2_RelativeTo_n1);
@@ -511,17 +509,17 @@ namespace BalthazarGraph {
         }
 
         //Links nodes
-        public void LinkNodes(ref Node n1, ref Node n2, nodeDir n2_RelativeTo_n1) {
+        public void LinkNodes(ref Node n1, ref Node n2, NodeDir n2_RelativeTo_n1) {
             LinkNodes(ref n1, ref n2, n2_RelativeTo_n1, 0f);
         }
 
         //Links nodes, with weight
-        public void LinkNodes(ref Node n1, ref Node n2, nodeDir n2_RelativeTo_n1, float weight) {
+        public void LinkNodes(ref Node n1, ref Node n2, NodeDir n2_RelativeTo_n1, float weight) {
             n1.hasNeighbor[(int)n2_RelativeTo_n1] = true;
             n1.neighbors[(int)n2_RelativeTo_n1] = n2;
             n1.neighborCosts[(int)n2_RelativeTo_n1] = weight;
 
-            nodeDir opposite = Opposite(n2_RelativeTo_n1);
+            NodeDir opposite = Opposite(n2_RelativeTo_n1);
 
             n2.coord = n1.coord + CoordFromNodeDir(n2_RelativeTo_n1);
             n2.hasNeighbor[(int)opposite] = true;
@@ -530,22 +528,22 @@ namespace BalthazarGraph {
         }
 
         //opposite of direction
-        public nodeDir Opposite(nodeDir direction) {
+        public NodeDir Opposite(NodeDir direction) {
             return (int)direction < 3 ? ( direction + 3 ) : ( direction - 3 );
         }
 
         //next direction required to run a full hexagon
-        public nodeDir Next(nodeDir direction) {
+        public NodeDir Next(NodeDir direction) {
             return (int)direction < 5 ? ( direction + 1 ) : ( direction - 5 );
         }
 
         //prev direction required to run a full hexagon backwards (ccw)
-        public nodeDir Prev(nodeDir direction) {
+        public NodeDir Prev(NodeDir direction) {
             return (int)direction < 1 ? ( direction + 5 ) : ( direction - 1 );
         }
 
         //converts an outward direction from an inner node to the direction it has to start following for traversing all of the nodes in its hex
-        public nodeDir OutToSideways(nodeDir direction) {
+        public NodeDir OutToSideways(NodeDir direction) {
             return (int)direction < 4 ? ( direction + 2 ) : ( direction - 4 );
         }
 
@@ -557,49 +555,61 @@ namespace BalthazarGraph {
 
         //returns 0 or 1 randomly, weighted by percent values
         public int Random01Weighted(int percent0, int percent1) {
-            int result = Random.Range(0, percent0 + percent1);
-            return result>percent0 ? 1 : 0;
+            return RandomWeighted(0, 1, percent0, percent1);
         }
 
         //returns an array of possible potential nodes to materialize next
-        public Coord PickPotentialNode(pickMode mode) {
+        public Coord PickPotentialNode(PickMode mode) {
             List<PotentialNode> pnList = new List<PotentialNode>();
             int minCon = 7;
             int maxCon = 0;
-            if ( mode != pickMode.Random ) {
+            if ( mode != PickMode.Indifferent ) {
                 foreach (PotentialNode pn in potentialNodes) {
                     minCon = Mathf.Min(minCon, pn.GetNeighborCount());
                     maxCon = Mathf.Max(maxCon, pn.GetNeighborCount());
                 }
             }
 
-            //Debug.Log(minCon.ToString() + " " + maxCon.ToString());
             switch (mode) {
-                case pickMode.Structural:
+                case PickMode.Crystal:
                     foreach ( PotentialNode pn in potentialNodes ) {
                         if ( pn.GetNeighborCount() == maxCon ) {
                             pnList.Add(pn);
                         }
                     }
                     break;
-                case pickMode.SemiStructural:
+                case PickMode.Structured:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.GetNeighborCount() >= maxCon - Random01Weighted(60,40) ) {
+                        if ( pn.GetNeighborCount() >= maxCon - Random01Weighted(90,10) ) {
                             pnList.Add(pn);
                         }
                     }
                     break;
-                case pickMode.Random:
+                case PickMode.Arranged:
+                    foreach ( PotentialNode pn in potentialNodes ) {
+                        if ( pn.GetNeighborCount() >= maxCon - Random01Weighted(40,60) ) {
+                            pnList.Add(pn);
+                        }
+                    }
+                    break;
+                case PickMode.Indifferent:
                     pnList = potentialNodes;
                     break;
-                case pickMode.SemiChaotic:
+                case PickMode.Shattered:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.GetNeighborCount() <= minCon + Random01Weighted(60,40) ) {
+                        if ( pn.GetNeighborCount() <= minCon + Random01Weighted(70,30) ) {
                             pnList.Add(pn);
                         }
                     }
                     break;
-                case pickMode.Chaotic:
+                case PickMode.Chaotic:
+                    foreach ( PotentialNode pn in potentialNodes ) {
+                        if ( pn.GetNeighborCount() <= minCon + RandomWeighted(0, 2, 95, 5) ) {
+                            pnList.Add(pn);
+                        }
+                    }
+                    break;
+                case PickMode.Tentacular:
                     foreach ( PotentialNode pn in potentialNodes ) {
                         if ( pn.GetNeighborCount() == minCon ) {
                             pnList.Add(pn);
@@ -617,8 +627,6 @@ namespace BalthazarGraph {
 
         //Prints the graph to console
         public void DebugPrintGraph(bool inclPotential) {
-            
-            ClearLog();
 
             Debug.Log("===== PRINTING GRAPH =====");
 
@@ -636,7 +644,7 @@ namespace BalthazarGraph {
         //Prints all of a node's neighbors to console
         public void DebugPrintPnodeNeighbors(PotentialNode pn) {
 
-            string[] dirNames = nodeDir.GetNames(typeof(nodeDir));
+            string[] dirNames = NodeDir.GetNames(typeof(NodeDir));
 
             string nodeText = "Potential Node | ";
             for ( int i = 0; i < 6; i++ ) {
@@ -660,7 +668,7 @@ namespace BalthazarGraph {
 
         //Prints all of a node's neighbors to console
         public void DebugPrintNeighbors(Node n) {
-            string[] dirNames = nodeDir.GetNames(typeof(nodeDir));
+            string[] dirNames = NodeDir.GetNames(typeof(NodeDir));
 
             string nodeText = "Node: " + n.nodeID.ToString() + " | ";
             for ( int i = 0; i < 6; i++ ) {
@@ -670,15 +678,6 @@ namespace BalthazarGraph {
             }
             nodeText += "| (" + n.coord.x.ToString() + ", " + n.coord.y.ToString() + ")";
             Debug.Log(nodeText);
-        }
-
-        //clears editor console
-        //thank you, anonymous stackoverflow user!
-        public void ClearLog() {
-            var assembly = Assembly.GetAssembly(typeof(UnityEditor.Editor));
-            var type = assembly.GetType("UnityEditor.LogEntries");
-            var method = type.GetMethod("Clear");
-            method.Invoke(new object(), null);
         }
 
     }
