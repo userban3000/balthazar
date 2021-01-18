@@ -5,7 +5,7 @@ using UnityEngine;
 
 using BalthazarGraph;
 
-public enum MapSize {Tiny, Small, Medium, Large, Huge, Massive, Gargantuan};
+public enum MapSize {Zero, Tiny, Small, Medium, Large, Huge, Massive, Gargantuan, Ludicrous, PleaseDontPickThis};
 public enum Connectivity {Webbed, Connected, Average, Displaced, Stranded};
 
 public struct LineInfo {
@@ -57,15 +57,20 @@ public class MapGenerator : MonoBehaviour {
     public int nodesToAdd;
 
     [Header("Internals")]
-    int[] sizeNodeCounts = {12, 30, 48, 102, 164, 224, 428};
-    float[] connectivityEdgeDeletionsCoefficients = {0.24f, 0.68f, 1f, 1.34f, 1.78f};
+    static readonly int[] sizeNodeCounts = {0, 12, 30, 48, 102, 164, 224, 428, 724, 1892};
+    static readonly float[] connectivityEdgeDeletionsCoefficients = {0.24f, 0.68f, 1f, 1.34f, 1.78f};
+    static readonly float[] connectivityNodeDeletionsCoefficients = {0f, 0.66f, 1f, 1.86f, 3.33f};
     Graph g;
 
+    [Header("Display")]
+    static readonly string[] sizeNames = MapSize.GetNames(typeof(MapSize));
+    static readonly string[] conNames = Connectivity.GetNames(typeof(Connectivity));
+
     public void GenerateMap() {
-        //MG_SetupNodes();
-        //MG_LoseEdges();
-        //MG_ConvertToWorldMap();
-        Debug.Log("Complete Map generation is disabled. Use individual Functions instead.");
+        MG_SetupNodes();
+        MG_LoseEdges();
+        MG_LoseNodes();
+        MG_ConvertToWorldMap();
     }
 
     public void MG_SetupNodes() {
@@ -73,7 +78,7 @@ public class MapGenerator : MonoBehaviour {
         if ( randomSeed ) 
             seed = Random.Range(-100000,100000);
         g = new Graph (seed);
-        Debug.Log("Graph succesfully generated with Seed: " + seed.ToString());
+        Debug.Log("Generating Graph with Seed: " + seed.ToString() + ", Size: " + sizeNames[(int)size] + ", Connectivity: " + conNames[(int)connectivity] + ".");
 
         //FIRST TRIANGLE
         g.GenerateFirstTriangle();
@@ -91,10 +96,41 @@ public class MapGenerator : MonoBehaviour {
 
     public void MG_LoseEdges() {
         int edgesToDelete = (int)(sizeNodeCounts[(int)size] * 0.5f * connectivityEdgeDeletionsCoefficients[(int)connectivity]);
+        Debug.Log("Deleting " + edgesToDelete.ToString() + " edges...");
         for ( int i = 0; i < edgesToDelete; i++ ) {
             int a = Random.Range(0, g.nodes.Count);
-            int b = Random.Range(0, g.nodes.Count);
-            g.DeleteEdge(g.nodes[a], g.nodes[b]);
+            int b;
+            do {
+                b = Random.Range(0, 6);
+            } while ( !g.nodes[a].hasNeighbor[b] );
+            g.DeleteEdge(g.nodes[a], (NodeDir)b);
+        }
+    }
+
+    int debugStep = -1;
+    public void MG_DebugLoseOneEdge() {
+        debugStep++;
+        /*
+        do {
+            b = Random.Range(0, 6);
+        } while ( !g.nodes[a].hasNeighbor[b] );
+        */
+
+        g.DeleteEdge(g.nodes[g.NodeFromCoord(new Coord(0,0))], (NodeDir)debugStep );
+        
+        if ( debugStep == 6 )
+            debugStep = -1;
+
+        MG_Debug_ClearWorld();
+        MG_ConvertToWorldMap();
+    }
+
+    public void MG_LoseNodes() {
+        int nodesToDelete = (int)(sizeNodeCounts[(int)size] * 0.1f * connectivityNodeDeletionsCoefficients[(int)connectivity]);
+        Debug.Log("Deleting " + nodesToDelete.ToString() + " nodes...");
+        for ( int i = 0; i < nodesToDelete; i++ ) {
+            int a = Random.Range(0, g.nodes.Count);
+            g.DeleteNode(g.nodes[a]);
         }
     }
 
@@ -111,13 +147,13 @@ public class MapGenerator : MonoBehaviour {
 
             for ( int i = 0; i < 6; i++ ) {
                 if ( n.hasNeighbor[i] ) {
-                    LineInfo l = new LineInfo( n.coord, n.neighbors[i].coord );
+                    LineInfo l = new LineInfo( n.coord, n.coord + g.CoordFromNodeDir((NodeDir)i) );
                     bool alreadyExists = false;
                     foreach ( LineInfo dl in drawnLines ) {
                         alreadyExists = dl == l;
                     }
                     if ( !alreadyExists ) {
-                        MG_Connect(n.coord, g.nodes[n.neighbors[i].nodeID].coord);
+                        MG_Connect(n.coord, n.coord + g.CoordFromNodeDir((NodeDir)i));
                     }
                 }
             }
@@ -157,7 +193,6 @@ public class MapGenerator : MonoBehaviour {
     }
 
     public void ShowGraph() {
-        ClearLog();
         g.DebugPrintGraph(true);
     }
 

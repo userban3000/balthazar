@@ -12,7 +12,10 @@ public class BalthazarGraphEditor : Editor {
 
         DrawDefaultInspector();
 
-        if ( GUILayout.Button("DISABLED: Generate Graph" )) {
+        GUILayout.Space(20f);
+        GUILayout.Label("Generation", EditorStyles.boldLabel);
+
+        if ( GUILayout.Button("Generate Graph" )) {
             map.GenerateMap();
         }
 
@@ -20,33 +23,59 @@ public class BalthazarGraphEditor : Editor {
             map.MG_SetupNodes();
         }
 
-        if ( GUILayout.Button("Show Graph Data" )) {
-            map.ShowGraph();
-        }
-
-        if ( GUILayout.Button("Convert to World" )) {
-            map.MG_ConvertToWorldMap();
-        }
-
-        if ( GUILayout.Button("Add Node" )) {
-            map.AddNode();
-        }
-
-        if ( GUILayout.Button("Debug: Clear Graph" )) {
-            map.MG_Debug_ClearGraph();
-        }
-
-        if ( GUILayout.Button("Debug: Clear World" )) {
-            map.MG_Debug_ClearWorld();
-        }
-
-        if ( GUILayout.Button("WIP: Lose Edges" )) {
+        if ( GUILayout.Button("Lose Edges" )) {
             map.MG_LoseEdges();
         }
 
-        if ( GUILayout.Button("Clear Console" )) {
+        if ( GUILayout.Button("Lose Nodes" )) {
+            map.MG_LoseNodes();
+        }
+
+        GUILayout.Space(20f);
+        GUILayout.Label("World", EditorStyles.boldLabel);
+
+        
+        if ( GUILayout.Button("Draw World" )) {
+            map.MG_ConvertToWorldMap();
+        }
+
+        if ( GUILayout.Button("Clear World" )) {
+            map.MG_Debug_ClearWorld();
+        }
+
+        if ( GUILayout.Button("Redraw World" )) {
+            map.MG_Debug_ClearWorld();
+            map.MG_ConvertToWorldMap();
+        }
+
+        GUILayout.Space(20f);
+        GUILayout.Label("Testing & Debug", EditorStyles.boldLabel);
+
+        if ( GUILayout.Button("Testing: Add Random Node" )) {
+            map.AddNode();
+        }
+
+        if ( GUILayout.Button("Testing: Delete Random Edge" )) {
+            map.MG_DebugLoseOneEdge();
+        }
+
+        if ( GUILayout.Button("Debug: Show Graph Data" )) {
+            map.ShowGraph();
+        }
+
+        if ( GUILayout.Button("Debug: Clear Graph Data" )) {
+            map.MG_Debug_ClearGraph();
+        }
+
+        if ( GUILayout.Button("Debug: Clear Console" )) {
             map.ClearLog();
         }
+
+        
+
+        
+
+        
 
     }
 

@@ -66,8 +66,6 @@ namespace BalthazarGraph {
         public int nodeID;
         public Coord coord;
         public bool[] hasNeighbor;
-        public Node[] neighbors;
-        public float[] neighborCosts;
 
         //get coord delta from a nodedir
         public Coord CoordFromNodeDir (NodeDir dir) {
@@ -99,17 +97,13 @@ namespace BalthazarGraph {
             nodeID = _nID;
             coord = new Coord(0,0);
             hasNeighbor = new bool[6];
-            neighbors = new Node[6];
-            neighborCosts = new float[6];
         }
 
         //Node constructor
-        public Node ( int _nID, Coord _coord, bool[] _hasNeighbor, Node[] _neighbors, float[] _neighborCosts ) {
+        public Node ( int _nID, Coord _coord ) {
             nodeID = _nID;
             coord = _coord;
-            hasNeighbor = _hasNeighbor;
-            neighbors = _neighbors;
-            neighborCosts = _neighborCosts;
+            hasNeighbor = new bool[6];
         }
 
         public int NeighborCount() {
@@ -119,25 +113,6 @@ namespace BalthazarGraph {
                     nc++;
             }
             return nc;
-        }
-
-        //Adds an edge between this node and n, with a custom weight
-        public void ConnectTo (Node n, NodeDir direction, float weight) {
-            hasNeighbor[(int)direction] = true;
-            neighbors[(int)direction] = n;
-            neighborCosts[(int)direction] = weight;
-
-            NodeDir opposite = Opposite(direction);
-
-            n.coord = this.coord + CoordFromNodeDir(direction);
-            n.hasNeighbor[(int)opposite] = true;
-            n.neighbors[(int)opposite] = this;
-            n.neighborCosts[(int)opposite] = weight;
-        }
-
-        //Adds an edge between this node and n, with a weight of 0
-        public void ConnectTo (Node n, NodeDir direction) {
-            ConnectTo (n, direction, 0f);
         }
 
         //equals operator
@@ -166,9 +141,7 @@ namespace BalthazarGraph {
 
     public struct PotentialNode {
         public Coord coord;
-        public int neighborCount;
         public bool[] hasNeighbor;
-        public Node[] neighbors;
 
         //get coord delta from a nodedir
         public Coord CoordFromNodeDir (NodeDir dir) {
@@ -192,9 +165,7 @@ namespace BalthazarGraph {
 
         public PotentialNode ( int discard ) {
             coord = new Coord(0,0);
-            neighborCount = 0;
             hasNeighbor = new bool[6];
-            neighbors = new Node[6];
         }
 
         //updates neighbor count for easier checking
@@ -301,7 +272,10 @@ namespace BalthazarGraph {
         }
 
         //Adds a preconfigured node
-        public void AddNode(Node n) {
+        public void AddNode(Node preconfigured) {
+            Node n = new Node(0);
+            n = preconfigured;
+            n.nodeID = nodeCount++;
             nodes.Add(n);
         }
 
@@ -314,7 +288,7 @@ namespace BalthazarGraph {
         public void DeleteNode(Node n) {
             for ( int i = 0; i < 6; i++ ) {
                 if ( n.hasNeighbor[i] == true ) {
-                    DeleteEdge(n, n.neighbors[i]);
+                    DeleteEdge(n, (NodeDir)i);
                 }
             }
         }
@@ -324,38 +298,43 @@ namespace BalthazarGraph {
             nodes.Remove(n);
         }
 
-        //delete edge between two nodes
-        //keepn1 makes sure the first node isn't deleted, as to prevent recursion when this function gets called from DeleteNode()
-        public void DeleteEdge(Node n1, Node n2) {
-            bool foundEdge = false;
+        public int NodeFromCoord(Coord c) {
             int i;
-            for ( i = 0; i < 6 && !foundEdge; i++ ) {
-                if ( n1.neighbors[i] == n2 && n1.hasNeighbor[i] ) {
-                    foundEdge = true;
-                }
+            bool found = false;
+            for ( i = 0; i < nodes.Count && !found; i++ ) {
+                found = c == nodes[i].coord;
             }
+            if ( !found )
+                Debug.LogError("Looked for Node at (" + c.x.ToString() + "," + c.y.ToString() + "), but could not find it!");
+            return i - 1;
+        }
 
-            i--;
+        public bool ExistsNodeFromCoord(Coord c) {
+            bool found = false;
+            for ( int i = 0; i < nodes.Count && !found; i++ ) {
+                found = c == nodes[i].coord;
+            }
+            return found;
+        }
+
+        //delete edge between two nodes
+        public void DeleteEdge(Node n1, NodeDir dir) {
+            bool foundEdge = n1.hasNeighbor[(int)dir];
 
             if ( !foundEdge ) {
-                Debug.LogError("Edge deletion between " + n1.nodeID.ToString() + " and " + n2.nodeID.ToString() + " failed! There is no such connection." );
+                Debug.LogError("Edge deletion with data NodeID: " + n1.nodeID.ToString() + ", Direction: " + ((int)dir).ToString() + " failed! Edge does not exist." );
                 return;
             }
             
-            n1.hasNeighbor[i] = false;
-            n1.neighborCosts[i] = 0;
+            n1.hasNeighbor[(int)dir] = false;
             if ( n1.NeighborCount() == 0 )
                 ShredNode(n1);
 
-            n2.hasNeighbor[(int)Opposite((NodeDir)i)] = false;
-            n2.neighborCosts[(int)Opposite((NodeDir)i)] = 0;
-            if ( n2.NeighborCount() == 0 )
-                ShredNode(n2);
-        }
+            int n2 = NodeFromCoord(n1.coord + CoordFromNodeDir(dir));
 
-        //delete edge between two nodes via int
-        public void DeleteEdge(int n1_ID, int n2_ID) {
-            DeleteEdge(nodes[n1_ID], nodes[n2_ID]);
+            nodes[n2].hasNeighbor[(int)Opposite(dir)] = false;
+            if ( nodes[n2].NeighborCount() == 0 )
+                ShredNode(nodes[n2]);
         }
 
         //merges two conflicting potential nodes
@@ -364,34 +343,18 @@ namespace BalthazarGraph {
             for ( int i = 0; i < 6; i++ ) {
                 if ( mergeThis.hasNeighbor[i] ) {
                     pn.hasNeighbor[i] = true;
-                    pn.neighbors[i] = mergeThis.neighbors[i];
                 }
             }
             return pn;
-        }
-
-        public bool FindNodeAtCoord(Coord c, out Node foundNode ) {
-            foundNode = new Node(-1);
-            foreach ( Node n in nodes ) {
-                if ( n.coord == c ) {
-                    foundNode = n;
-                }
-            }
-            return foundNode.nodeID != -1;
         }
 
         //updates a potential node with its neighbors
-        public PotentialNode HexPotentialNode(PotentialNode pn) {
-            pn.neighborCount = 0;
+        public void HexPotentialNode(ref PotentialNode pn) {
             for ( int i = 0; i < 6; i++ ) {
-                Coord check = pn.coord + CoordFromNodeDir((NodeDir)i);
-                if ( FindNodeAtCoord(check, out Node n) ) {
+                if ( ExistsNodeFromCoord(pn.coord + CoordFromNodeDir((NodeDir)i) ) ) {
                     pn.hasNeighbor[i] = true;
-                    pn.neighborCount++;
-                    pn.neighbors[i] = n;
                 }
             }
-            return pn;
         }
 
         //Adds a new potential node
@@ -399,8 +362,7 @@ namespace BalthazarGraph {
             PotentialNode pn = new PotentialNode(0);
             pn.coord = n.coord + CoordFromNodeDir(dir);
             
-            //Debug.Log(pn.coord.x.ToString() + " " + pn.coord.y.ToString());
-            pn = HexPotentialNode(pn);
+            HexPotentialNode(ref pn);
 
             bool alreadyExists = false;
             for ( int i = 0; i < potentialNodes.Count; i++ ) {
@@ -414,32 +376,21 @@ namespace BalthazarGraph {
                 potentialNodes.Add(pn);
         }
 
-        //Adds a new potential node via nodeID
-        public void AddPotentialNode(int nodeID, NodeDir dir) {
-            AddPotentialNode(nodes[nodeID], dir);
-        }
-
         //generates the starting triangle of nodes
         public void GenerateFirstTriangle () {
-            AddNodes(3);
+            Node n0 = new Node(0, new Coord(0,0) );
+            Node n1 = new Node(1, new Coord(1,1) );
+            Node n2 = new Node(2, new Coord(2,0) );
+
+            AddNode(n0); AddNode(n1); AddNode(n2);
 
             LinkNodes(0, 1, NodeDir.UR);
             LinkNodes(1, 2, NodeDir.DR);
             LinkNodes(0, 2, NodeDir.R);
 
-            AddPotentialNode(0, NodeDir.UL);
-            AddPotentialNode(1, NodeDir.R);
-            AddPotentialNode(2, NodeDir.DL);
-        }
-
-        //finds a potential node from a given nodeID and direction
-        public PotentialNode FindPotentialNode(int nodeID, NodeDir dir) {
-            return FindPotentialNode(nodes[nodeID].coord + CoordFromNodeDir(dir));
-        }
-
-        //finds a potential node from a given node and direction
-        public PotentialNode FindPotentialNode(Node n, NodeDir dir) {
-            return FindPotentialNode(n.coord + CoordFromNodeDir(dir));
+            AddPotentialNode(nodes[0], NodeDir.UL);
+            AddPotentialNode(nodes[1], NodeDir.R);
+            AddPotentialNode(nodes[2], NodeDir.DL);
         }
 
         //finds a potential node at given coordinate
@@ -448,33 +399,25 @@ namespace BalthazarGraph {
                 if ( pn.coord == c ) 
                     return pn;
             }
-            Debug.LogError("FATAL ERROR: No Potential Nodes found at " + c.x.ToString() + ", " + c.y.ToString() + "!");
+            Debug.LogError("No Potential Nodes found at " + c.x.ToString() + ", " + c.y.ToString() + "!");
             return new PotentialNode();
-        }
-
-        //turns a potential node into a node found by ID
-        public void MaterializePotentialNode(int nodeID, NodeDir dir) {
-            MaterializePotentialNode(nodes[nodeID].coord + CoordFromNodeDir(dir));
-        }
-
-        //turns a potential node into a node
-        public void MaterializePotentialNode(Node n, NodeDir dir) {
-            MaterializePotentialNode(n.coord + CoordFromNodeDir(dir));
         }
 
         //turns a potential node into a node
         public void MaterializePotentialNode(Coord c) {
             PotentialNode pn = FindPotentialNode(c);
+            
             potentialNodes.Remove(pn);
-
-            Node newNode = new Node(nodeCount++);
+            Node n = new Node(0);
+            n.coord = c;
+            AddNode(n);
 
             int fpn, lpn;
             fpn = lpn = -1;
 
             for ( int i = 0; i < 6; i++ ) {
                 if ( pn.hasNeighbor[i] ) {
-                    LinkNodes(ref pn.neighbors[i], ref newNode, Opposite((NodeDir)i) );
+                    LinkNodes(NodeFromCoord(c), NodeFromCoord(c + CoordFromNodeDir((NodeDir)i)), (NodeDir)i );
                     if ( !pn.hasNeighbor[(int)Next((NodeDir)i)] ) {
                         lpn = (int)Next((NodeDir)i);
                     }
@@ -486,45 +429,23 @@ namespace BalthazarGraph {
                 }
             }
 
-            AddNode(newNode);
-
             //todo only update pnodes in proximity
-            foreach ( PotentialNode allPn in potentialNodes ) {
-                HexPotentialNode(allPn);
+            for ( int i = 0; i < potentialNodes.Count; i++ ) {
+                PotentialNode updater = potentialNodes[i];
+                HexPotentialNode(ref updater);
+                potentialNodes[i] = updater;
             }
 
             if ( fpn != -1 )
-                AddPotentialNode(newNode, (NodeDir)fpn);
+                AddPotentialNode(nodes[nodes.Count-1], (NodeDir)fpn);
             if ( lpn != -1 )
-                AddPotentialNode(newNode, (NodeDir)lpn);
+                AddPotentialNode(nodes[nodes.Count-1], (NodeDir)lpn);
         }
 
-        //Links nodes
-        public void LinkNodes(int n1id, int n2id, NodeDir n2_RelativeTo_n1) {
-            Node n1 = nodes[n1id];
-            Node n2 = nodes[n2id];
-            LinkNodes(ref n1, ref n2, n2_RelativeTo_n1);
-            nodes[n1id] = n1;
-            nodes[n2id] = n2;
-        }
-
-        //Links nodes
-        public void LinkNodes(ref Node n1, ref Node n2, NodeDir n2_RelativeTo_n1) {
-            LinkNodes(ref n1, ref n2, n2_RelativeTo_n1, 0f);
-        }
-
-        //Links nodes, with weight
-        public void LinkNodes(ref Node n1, ref Node n2, NodeDir n2_RelativeTo_n1, float weight) {
-            n1.hasNeighbor[(int)n2_RelativeTo_n1] = true;
-            n1.neighbors[(int)n2_RelativeTo_n1] = n2;
-            n1.neighborCosts[(int)n2_RelativeTo_n1] = weight;
-
-            NodeDir opposite = Opposite(n2_RelativeTo_n1);
-
-            n2.coord = n1.coord + CoordFromNodeDir(n2_RelativeTo_n1);
-            n2.hasNeighbor[(int)opposite] = true;
-            n2.neighbors[(int)opposite] = n1;
-            n2.neighborCosts[(int)opposite] = weight;
+        //connects nodes
+        public void LinkNodes (int n1, int n2, NodeDir n2_RelativeTo_n1) {
+            nodes[n1].hasNeighbor[(int)n2_RelativeTo_n1] = true;
+            nodes[n2].hasNeighbor[(int)Opposite(n2_RelativeTo_n1)] = true;
         }
 
         //opposite of direction
@@ -649,7 +570,7 @@ namespace BalthazarGraph {
             string nodeText = "Potential Node | ";
             for ( int i = 0; i < 6; i++ ) {
                 if ( pn.hasNeighbor[i] ) {
-                    nodeText += dirNames[i] + ": " + pn.neighbors[i].nodeID.ToString() + ", ";
+                    nodeText += dirNames[i] + ": " + NodeFromCoord(pn.coord + CoordFromNodeDir((NodeDir)i)).ToString() + ", ";
                 }
             }
             nodeText += "| (" + pn.coord.x.ToString() + ", " + pn.coord.y.ToString() + ")";
@@ -673,7 +594,7 @@ namespace BalthazarGraph {
             string nodeText = "Node: " + n.nodeID.ToString() + " | ";
             for ( int i = 0; i < 6; i++ ) {
                 if ( n.hasNeighbor[i] ) {
-                    nodeText += dirNames[i] + ": " + n.neighbors[i].nodeID.ToString() + ", ";
+                    nodeText += dirNames[i] + ": " + NodeFromCoord(n.coord + CoordFromNodeDir((NodeDir)i)).ToString() + ", ";
                 }
             }
             nodeText += "| (" + n.coord.x.ToString() + ", " + n.coord.y.ToString() + ")";
