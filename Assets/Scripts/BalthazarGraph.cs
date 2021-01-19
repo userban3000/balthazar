@@ -546,6 +546,57 @@ namespace BalthazarGraph {
             DebugPrintGraph(false);
         }
 
+        //returns a node's list position
+        public int PosInList(Node n) {
+            int i;
+            bool found = false;
+            for ( i = 0; i < nodes.Count && !found; i++ ) {
+                if ( n == nodes[i] )
+                    found = true;
+            }
+            if ( !found )
+                Debug.LogError("Searched for list index of Node at Coord (" + n.coord.x + "," + n.coord.y + "), but could not find it.");
+            return i - 1;
+        }
+
+        //depth first tagging
+        public void DFS(Node start, ref bool[] newlyVisited) {
+            List<Node> q = new List<Node>();
+            q.Add(start);
+
+            int index = 0;
+
+            while ( index < q.Count ) {
+                Node n = q[index];
+
+                newlyVisited[PosInList(n)] = true;
+                for ( int i = 0; i < 6; i++ ) {
+                    if ( n.hasNeighbor[i] && !newlyVisited[NodeFromCoord(n.coord + CoordFromNodeDir((NodeDir)i))] ) {
+                        q.Add(nodes[NodeFromCoord(n.coord + CoordFromNodeDir((NodeDir)i))]);
+                    }
+                }
+
+                index++;
+            }
+        }
+
+        //Returns number of constellations
+        public int ConstellationCount() {
+            int count = 0;
+            bool[] visited = new bool[nodes.Count];
+            foreach ( Node n in nodes ) {
+                bool[] newlyVisited = new bool[nodes.Count];
+                if ( !visited[PosInList(n)] ) {
+                    DFS(n, ref newlyVisited);
+                    count++;
+                }
+                for (int i = 0; i < visited.Length; i++ ) {
+                    visited[i] = visited[i] || newlyVisited[i];
+                }
+            }
+            return count;
+        }
+
         //Prints the graph to console
         public void DebugPrintGraph(bool inclPotential) {
 

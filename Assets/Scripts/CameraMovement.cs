@@ -31,17 +31,19 @@ public class CameraMovement : MonoBehaviour {
 
         Vector3 move = Vector3.zero;
 
-        //rewrite this trash later
+        //rewrite this trash again later
         if ( mPos.x <= xThreshold ) 
-            move.x = -moveSens; //move left
-        if ( mPos.x >= 1 - xThreshold )
-            move.x = moveSens; // move right
-        if ( mPos.y <= yThreshold ) 
-            move.z = -moveSens; //move down
-        if ( mPos.y >= 1 - yThreshold )
-            move.z = moveSens; // move up
+            move.x = -moveSens * Mathf.Pow( (xThreshold - mPos.x) * ( 1 / xThreshold ), 6); //move left
+        if ( mPos.x >= 1 - xThreshold ) 
+            move.x = moveSens * Mathf.Pow( (1/xThreshold) * (mPos.x - 1 + xThreshold), 6); // move right
+        if ( mPos.y <= yThreshold )
+            move.z = -moveSens * Mathf.Pow( (yThreshold - mPos.y) * ( 1 / yThreshold ), 6); //move down
+        if ( mPos.y >= 1 - yThreshold ) 
+            move.z = moveSens * Mathf.Pow((1/yThreshold) * (mPos.y - 1 + yThreshold), 6); // move up
 
-        cam.transform.position += move;
+        if ( move != Vector3.zero ) {
+            cam.transform.position += move * Time.deltaTime;
+        }
     }
 
 }

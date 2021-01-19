@@ -6,7 +6,7 @@ using UnityEngine;
 using BalthazarGraph;
 
 public enum MapSize {Zero, Tiny, Small, Medium, Large, Huge, Massive, Gargantuan, Ludicrous, PleaseDontPickThis};
-public enum Connectivity {Webbed, Connected, Average, Displaced, Stranded};
+public enum Connectivity {Full, Webbed, Connected, Average, Displaced, Stranded};
 
 public struct LineInfo {
     Coord from, to;
@@ -17,7 +17,7 @@ public struct LineInfo {
     }
 
     public static bool operator == (LineInfo l1, LineInfo l2) {
-        return l1.from == l2.from && l1.to == l2.to;
+        return (l1.from == l2.from && l1.to == l2.to) || (l1.from == l2.to && l1.to == l2.from) || (l2.from == l1.to && l2.to == l1.from);
     }
 
     public static bool operator != (LineInfo l1, LineInfo l2) {
@@ -45,6 +45,9 @@ public class MapGenerator : MonoBehaviour {
     public MapSize size;
     public Connectivity connectivity;
     public PickMode pick;
+    [Range(1,8)]
+    private int constellations = 1;
+    public bool allowRifting;
 
     [Header("Objects")]
     public GameObject systemHolder;
@@ -58,8 +61,8 @@ public class MapGenerator : MonoBehaviour {
 
     [Header("Internals")]
     static readonly int[] sizeNodeCounts = {0, 12, 30, 48, 102, 164, 224, 428, 724, 1892};
-    static readonly float[] connectivityEdgeDeletionsCoefficients = {0.24f, 0.68f, 1f, 1.34f, 1.78f};
-    static readonly float[] connectivityNodeDeletionsCoefficients = {0f, 0.66f, 1f, 1.86f, 3.33f};
+    static readonly float[] connectivityEdgeDeletionsCoefficients = {0f, 0.44f, 1f, 1.28f, 1.34f, 1.78f};
+    static readonly float[] connectivityNodeDeletionsCoefficients = {0f, 0.31f, 0.8f, 1.25f, 2.24f, 3.33f};
     Graph g;
 
     [Header("Display")]
@@ -69,7 +72,7 @@ public class MapGenerator : MonoBehaviour {
     public void GenerateMap() {
         MG_SetupNodes();
         MG_LoseEdges();
-        MG_LoseNodes();
+        //MG_LoseNodes();
         MG_ConvertToWorldMap();
     }
 
@@ -97,13 +100,24 @@ public class MapGenerator : MonoBehaviour {
     public void MG_LoseEdges() {
         int edgesToDelete = (int)(sizeNodeCounts[(int)size] * 0.5f * connectivityEdgeDeletionsCoefficients[(int)connectivity]);
         Debug.Log("Deleting " + edgesToDelete.ToString() + " edges...");
+
         for ( int i = 0; i < edgesToDelete; i++ ) {
+
             int a = Random.Range(0, g.nodes.Count);
             int b;
             do {
                 b = Random.Range(0, 6);
             } while ( !g.nodes[a].hasNeighbor[b] );
             g.DeleteEdge(g.nodes[a], (NodeDir)b);
+
+            
+            if ( !allowRifting ) {
+                if ( g.ConstellationCount() > constellations) {
+                    g.LinkNodes(a, g.NodeFromCoord(g.nodes[a].coord + g.CoordFromNodeDir((NodeDir)b)), (NodeDir)b);
+                    i--;
+                }
+            }
+
         }
     }
 
@@ -117,6 +131,8 @@ public class MapGenerator : MonoBehaviour {
         */
 
         g.DeleteEdge(g.nodes[g.NodeFromCoord(new Coord(0,0))], (NodeDir)debugStep );
+
+        
         
         if ( debugStep == 6 )
             debugStep = -1;
@@ -130,7 +146,14 @@ public class MapGenerator : MonoBehaviour {
         Debug.Log("Deleting " + nodesToDelete.ToString() + " nodes...");
         for ( int i = 0; i < nodesToDelete; i++ ) {
             int a = Random.Range(0, g.nodes.Count);
+            Node n = g.nodes[a];
             g.DeleteNode(g.nodes[a]);
+            if ( !allowRifting ) {
+                if ( g.ConstellationCount() > constellations) {
+                    g.AddNode(n);
+                    i--;
+                }
+            }
         }
     }
 
