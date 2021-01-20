@@ -55,8 +55,8 @@ public class BalthazarGraphEditor : Editor {
             map.AddNode();
         }
 
-        if ( GUILayout.Button("Testing: Delete Random Edge" )) {
-            map.MG_DebugLoseOneEdge();
+        if ( GUILayout.Button("Debug: Constellation Count" )) {
+            map.MG_Debug_CC();
         }
 
         if ( GUILayout.Button("Debug: Show Graph Data" )) {

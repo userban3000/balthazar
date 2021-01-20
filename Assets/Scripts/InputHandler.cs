@@ -42,6 +42,8 @@ public class InputHandler : MonoBehaviour {
             isHovering = false;
         }
 
+        Debug.Log(isHovering);
+
         if ( isHovering ) {
             starSysUIHolder.gameObject.SetActive(true);
             starSysUIHolder.Customize(hitSystem);

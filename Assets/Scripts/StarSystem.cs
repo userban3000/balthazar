@@ -16,14 +16,25 @@ public class StarSystem : MonoBehaviour {
     public StarSystem[] Neighbors;
 
     [Header("Unit Generation Properties")]
-    public int industryPerTick = 1;
-    public int industryToGenerateUnit = 1000;
+    public int industryPerTick = 0;
+    public int industryToGenerateUnit = 20000;
     public int industry = 0;
+    public Army armyPrefab;
 
     [Header("System Properties")]
     public int teamIndex;
+    public int health;
 
-    private void Awake() {
+    private void Set() {
+        
+    }
+
+    private void Update() {
+        if ( Input.GetKeyDown(KeyCode.Space) ) {
+            Army a = Instantiate(armyPrefab, this.transform.position + Vector3.forward, Quaternion.identity);
+            PlayerData pd = new PlayerData(0);
+            a.Set(3, pd);
+        }
     }
 
     private void FixedUpdate() {

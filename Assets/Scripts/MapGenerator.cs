@@ -43,11 +43,11 @@ public class MapGenerator : MonoBehaviour {
 
     [Header("Generation Settings")]
     public MapSize size;
-    public Connectivity connectivity;
     public PickMode pick;
+    public Connectivity connectivity;
+    public bool controlRifting;
     [Range(1,8)]
-    private int constellations = 1;
-    public bool allowRifting;
+    public int maxConstellations;
 
     [Header("Objects")]
     public GameObject systemHolder;
@@ -70,9 +70,13 @@ public class MapGenerator : MonoBehaviour {
     static readonly string[] conNames = Connectivity.GetNames(typeof(Connectivity));
 
     public void GenerateMap() {
+        //move these later
+        GameData.SetScience();
+        GameData.SetNames();
+        
         MG_SetupNodes();
         MG_LoseEdges();
-        //MG_LoseNodes();
+        MG_LoseNodes();
         MG_ConvertToWorldMap();
     }
 
@@ -110,35 +114,11 @@ public class MapGenerator : MonoBehaviour {
             } while ( !g.nodes[a].hasNeighbor[b] );
             g.DeleteEdge(g.nodes[a], (NodeDir)b);
 
-            
-            if ( !allowRifting ) {
-                if ( g.ConstellationCount() > constellations) {
-                    g.LinkNodes(a, g.NodeFromCoord(g.nodes[a].coord + g.CoordFromNodeDir((NodeDir)b)), (NodeDir)b);
-                    i--;
-                }
+            if ( controlRifting && g.ConstellationCount() > maxConstellations) {
+                g.LinkNodes(a, g.NodeFromCoord(g.nodes[a].coord + g.CoordFromNodeDir((NodeDir)b)), (NodeDir)b);
             }
 
         }
-    }
-
-    int debugStep = -1;
-    public void MG_DebugLoseOneEdge() {
-        debugStep++;
-        /*
-        do {
-            b = Random.Range(0, 6);
-        } while ( !g.nodes[a].hasNeighbor[b] );
-        */
-
-        g.DeleteEdge(g.nodes[g.NodeFromCoord(new Coord(0,0))], (NodeDir)debugStep );
-
-        
-        
-        if ( debugStep == 6 )
-            debugStep = -1;
-
-        MG_Debug_ClearWorld();
-        MG_ConvertToWorldMap();
     }
 
     public void MG_LoseNodes() {
@@ -147,12 +127,14 @@ public class MapGenerator : MonoBehaviour {
         for ( int i = 0; i < nodesToDelete; i++ ) {
             int a = Random.Range(0, g.nodes.Count);
             Node n = g.nodes[a];
-            g.DeleteNode(g.nodes[a]);
-            if ( !allowRifting ) {
-                if ( g.ConstellationCount() > constellations) {
-                    g.AddNode(n);
-                    i--;
-                }
+            bool safeToDel = true;
+
+            if ( controlRifting && g.ConstellationCount(a) > maxConstellations ) {
+                safeToDel = false;
+            }
+
+            if ( safeToDel ) {
+                g.DeleteNode(g.nodes[a]);
             }
         }
     }
@@ -197,6 +179,10 @@ public class MapGenerator : MonoBehaviour {
 
     public void MG_Debug_ClearGraph() {
         g = new Graph(0);
+    }
+
+    public void MG_Debug_CC() {
+        Debug.Log(g.ConstellationCount());
     }
 
     public void MG_Debug_ClearWorld() {

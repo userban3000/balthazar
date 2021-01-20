@@ -501,14 +501,14 @@ namespace BalthazarGraph {
                     break;
                 case PickMode.Structured:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.GetNeighborCount() >= maxCon - Random01Weighted(90,10) ) {
+                        if ( pn.GetNeighborCount() >= maxCon - Random01Weighted(70,30) ) {
                             pnList.Add(pn);
                         }
                     }
                     break;
                 case PickMode.Arranged:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.GetNeighborCount() >= maxCon - Random01Weighted(40,60) ) {
+                        if ( pn.GetNeighborCount() >= maxCon - 1 - Random01Weighted(30,70) ) {
                             pnList.Add(pn);
                         }
                     }
@@ -525,7 +525,7 @@ namespace BalthazarGraph {
                     break;
                 case PickMode.Chaotic:
                     foreach ( PotentialNode pn in potentialNodes ) {
-                        if ( pn.GetNeighborCount() <= minCon + RandomWeighted(0, 2, 95, 5) ) {
+                        if ( pn.GetNeighborCount() <= minCon + 1 + Random01Weighted(20,80) ) {
                             pnList.Add(pn);
                         }
                     }
@@ -560,7 +560,7 @@ namespace BalthazarGraph {
         }
 
         //depth first tagging
-        public void DFS(Node start, ref bool[] newlyVisited) {
+        public void DFS(Node start, ref bool[] visited) {
             List<Node> q = new List<Node>();
             q.Add(start);
 
@@ -569,9 +569,9 @@ namespace BalthazarGraph {
             while ( index < q.Count ) {
                 Node n = q[index];
 
-                newlyVisited[PosInList(n)] = true;
+                visited[PosInList(n)] = true;
                 for ( int i = 0; i < 6; i++ ) {
-                    if ( n.hasNeighbor[i] && !newlyVisited[NodeFromCoord(n.coord + CoordFromNodeDir((NodeDir)i))] ) {
+                    if ( n.hasNeighbor[i] && !visited[NodeFromCoord(n.coord + CoordFromNodeDir((NodeDir)i))] ) {
                         q.Add(nodes[NodeFromCoord(n.coord + CoordFromNodeDir((NodeDir)i))]);
                     }
                 }
@@ -580,18 +580,23 @@ namespace BalthazarGraph {
             }
         }
 
-        //Returns number of constellations
         public int ConstellationCount() {
+            return ConstellationCount(-1);
+        }
+
+        //Returns number of constellations
+        public int ConstellationCount(int preMarkNodePos) {
             int count = 0;
             bool[] visited = new bool[nodes.Count];
+
+            if ( preMarkNodePos != -1 ) {
+                visited[preMarkNodePos] = true;
+            }
+
             foreach ( Node n in nodes ) {
-                bool[] newlyVisited = new bool[nodes.Count];
                 if ( !visited[PosInList(n)] ) {
-                    DFS(n, ref newlyVisited);
+                    DFS(n, ref visited);
                     count++;
-                }
-                for (int i = 0; i < visited.Length; i++ ) {
-                    visited[i] = visited[i] || newlyVisited[i];
                 }
             }
             return count;
