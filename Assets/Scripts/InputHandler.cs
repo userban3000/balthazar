@@ -16,11 +16,12 @@ public class InputHandler : MonoBehaviour {
     bool isHovering;
 
     [Header("UI")]
-    public StarSystemUI starSysUIHolder;
-    public Vector3 UI_Offset = new Vector3 (1f, 2f, 0f);
+    public StarSystemUI SSUI;
+
+    Vector3 mPos;
 
     private void Awake() {
-        cam = FindObjectOfType<Camera>();
+        cam = GetComponent<Camera>();
     }
 
     private void Update() {
@@ -28,10 +29,11 @@ public class InputHandler : MonoBehaviour {
         //SYSTEM SELECTION
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
+        mPos = Input.mousePosition;
 
         Debug.DrawRay(ray.origin, ray.direction*1000, Color.green);
 
-        if ( Physics.Raycast(ray.origin, ray.direction*1000, out hit, Mathf.Infinity, starSystemLayer ) ) {
+        if ( Physics.Raycast(ray.origin, ray.direction*1000, out hit, Mathf.Infinity, starSystemLayer ) && PointerIsOnScreen()) {
             GameObject modelGameObject = hit.collider.gameObject;
             hitSystem = modelGameObject.GetComponentInParent<StarSystem>() as StarSystem;
             isHovering = true;
@@ -40,13 +42,20 @@ public class InputHandler : MonoBehaviour {
         }
 
         if ( isHovering ) {
-            starSysUIHolder.gameObject.SetActive(true);
-            starSysUIHolder.Customize(hitSystem);
-            starSysUIHolder.transform.position = Input.mousePosition + UI_Offset;
-        } else {
-            starSysUIHolder.gameObject.SetActive(false);
+            hitSystem.particle.Play();
+            if ( Input.GetMouseButtonDown(0) ) {
+                SSUI.sys = hitSystem;
+                SSUI.OpenUI();
+            }
+        } else if ( hitSystem != null ) {
+            hitSystem.particle.Clear();
+            hitSystem.particle.Stop();
         }
         
+    }
+
+    private bool PointerIsOnScreen() {
+        return mPos.y <= Screen.height && mPos.y >= 0 && mPos.x <= Screen.width && mPos.x >= 0; 
     }
 
 }

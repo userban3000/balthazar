@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public static class GameData {
@@ -33,8 +34,8 @@ public static class GameData {
 
     public static void SetNames() {
         List<string> names = new List<string>();
-        
-        names.Add("Derrigorn");
+        TextAsset sysNamesFromFile = Resources.Load<TextAsset>("systemNames");
+        names.AddRange( sysNamesFromFile.text.Split( '\n' ) );
 
         systemNameCount = names.Count;
 
@@ -42,6 +43,15 @@ public static class GameData {
         systemNames = names.ToArray();
 
         systemNameUsed = new bool[systemNameCount];
+    }
+
+    public static string GetRandomName() {
+        int a;
+        do {
+            a = Random.Range(0, systemNameCount);
+        } while ( systemNameUsed[a] );
+        systemNameUsed[a] = true;
+        return systemNames[a];
     }
 
 

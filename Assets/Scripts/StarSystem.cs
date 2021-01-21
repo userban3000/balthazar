@@ -12,30 +12,21 @@ public class StarSystem : MonoBehaviour {
     public float scienceFactor = 1f;
 
     [Header("Mapping")]
-    public int systemID;
-    public StarSystem[] Neighbors;
+    public bool[] hasNeighbor = new bool[6];
 
     [Header("Unit Generation Properties")]
     public int industryPerTick = 0;
     public int industryToGenerateUnit = 20000;
     public int industry = 0;
     public Army armyPrefab;
+    public int unitsToSend;
 
     [Header("System Properties")]
     public int teamIndex;
     public int health;
 
-    private void Set() {
-        
-    }
-
-    private void Update() {
-        if ( Input.GetKeyDown(KeyCode.Space) ) {
-            Army a = Instantiate(armyPrefab, this.transform.position + Vector3.forward, Quaternion.identity);
-            PlayerData pd = new PlayerData(0);
-            a.Set(3, pd);
-        }
-    }
+    [Header("Effects")]
+    public ParticleSystem particle;
 
     private void FixedUpdate() {
         Tick(); 
