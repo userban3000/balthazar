@@ -15,9 +15,6 @@ public class InputHandler : MonoBehaviour {
     StarSystem hitSystem;
     bool isHovering;
 
-    [Header("Control")]
-    public float safeScreenPercent;
-
     [Header("UI")]
     public StarSystemUI starSysUIHolder;
     public Vector3 UI_Offset = new Vector3 (1f, 2f, 0f);
@@ -41,8 +38,6 @@ public class InputHandler : MonoBehaviour {
         } else {
             isHovering = false;
         }
-
-        Debug.Log(isHovering);
 
         if ( isHovering ) {
             starSysUIHolder.gameObject.SetActive(true);

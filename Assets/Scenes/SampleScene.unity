@@ -32250,7 +32250,7 @@ Camera:
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_RenderingPath: -1
+  m_RenderingPath: 3
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_TargetEye: 3
@@ -32290,7 +32290,6 @@ MonoBehaviour:
   starSystemLayer:
     serializedVersion: 2
     m_Bits: 512
-  safeScreenPercent: 0
   starSysUIHolder: {fileID: 9314160}
   UI_Offset: {x: 140, y: 70, z: 0}
 --- !u!114 &963194230
@@ -32308,8 +32307,10 @@ MonoBehaviour:
   xThreshold: 0.1
   yThreshold: 0.1
   yRespectsAspectRatio: 0
-  moveSens: 0
+  dragSpeed: 800
+  scrollSpeed: 10
   lockCursor: 0
+  zoomSmoothing: 10
 --- !u!1 &964618483
 GameObject:
   m_ObjectHideFlags: 0
