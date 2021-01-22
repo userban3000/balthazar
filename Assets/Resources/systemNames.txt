@@ -1,31 +1,64 @@
+Aastrid
+Aestival
+Apuesta Idiota
 Arradia
 Ashmodei
 Avaritia
-Big Mistake
+Atoll
+Awen
+Axolotl
 Barnacle
+Bast
+Big Mistake
+Bingus
+Caverna
+Centzon Huitznahua
 Circadia
+Codex
 Colonia
+Covenance
 Crossroad
 Demeter
 Derrigorn
 Dio
+Disharmony
+Draco
+Durge
 Edgware
 Eusebius
+Fullhouse
+Fantasma
 Gaia
+Gamma Knife
+Gizzard
 Gorn
 Hastia
+Hermetica
+Hollow Sun
 Hope's End
+Horus
 Integra
 Inverse
+Kael'thas
 Karpathia
 Kemps
 Kingfisher
+Lavondyss
+Lodestone
+La Tierra
+Mayahuel
+Medb
+Merope
+Miccailhuitontli
 Milkstain
-Mons
+Mons Gans
 Nasukan
 New Amsterdam
+New Rome
 Nifre
+Nim
 Nosanto
+Null Reference
 Nyssmyn
 Orichnia
 Outpost Beta
@@ -33,14 +66,40 @@ Pandyssia
 Parakeet
 Pascal
 Phyrex
+Quixotica
+Quarqua
+Rancho de la Luna
+Ravnica
 Rhea
+Rhododendron
 Riventhorpe
 Romany Dagger
 Sanctuary 14
 Satyr
+Sic Mundus
 Sisyphus
+Smol
 Sonos
+Spice Sands
+Sunship
+Sunstone
+Taberna
+Tabula Smaragdina
+The Ark
+The Halls
+The Magician
+Thoth
 Triglade
 Vecthree
+Vega
+Visitor
+Wah-Wah
 Witching Hour
+Wicked Cowboy
+Xanthippe
+Xkrux
+Yona
+Yusse
+Zalmoxis
 Zog
+Zzyzx

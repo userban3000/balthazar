@@ -50,7 +50,7 @@ MonoBehaviour:
     defaultState: 1
   intensity:
     overrideState: 1
-    value: 0.313
+    value: 0.109
   fastMode:
     overrideState: 0
     value: 0
@@ -88,10 +88,10 @@ MonoBehaviour:
     value: 1
   intensity:
     overrideState: 1
-    value: 3.46
+    value: 5.96
   threshold:
     overrideState: 1
-    value: 0.8
+    value: 0.81
   softKnee:
     overrideState: 0
     value: 0.5
@@ -100,7 +100,7 @@ MonoBehaviour:
     value: 65472
   diffusion:
     overrideState: 1
-    value: 10
+    value: 2.73
   anamorphicRatio:
     overrideState: 0
     value: 0

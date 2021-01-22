@@ -17,18 +17,21 @@ public class StarSystemUI : MonoBehaviour {
     public InputField UI_InputField;
     public int UTS_Link = -1;
 
-    private void Awake() {
+    private void Start() {
         UI_Canvas.enabled = false;
     }
 
     public void OpenUI() {
         UI_Canvas.enabled = true;
         UI_SystemName.text = sys.systemName;
+        UI_InputField.textComponent.text = null;
     }
 
     public void CloseUI() {
         UI_Canvas.enabled = false;
         UTS_Link = -1;
+        sys.particle.Clear();
+        sys.particle.Stop();
     }
 
     public void Update() {
@@ -45,6 +48,10 @@ public class StarSystemUI : MonoBehaviour {
                 UI_Send.interactable = false;
             } else {
                 UI_Send.interactable = true;
+            }
+
+            if ( Input.GetMouseButtonDown(1) ) {
+                CloseUI();
             }
         } 
     }

@@ -7,6 +7,9 @@ public class CameraMovement : MonoBehaviour {
     private Camera cam;
     private Rigidbody rb;
 
+    [Header("UI")]
+    public StarSystemUI SSUI;
+
     [Header("Mouse Settings")]
     public float dragSpeed;
     public float scrollSpeed;
@@ -27,7 +30,8 @@ public class CameraMovement : MonoBehaviour {
         Vector3 pos = cam.transform.position;
         
         //zooming
-        yVal -= Input.mouseScrollDelta.y * scrollSpeed;
+        if ( !SSUI.UI_Canvas.enabled )
+            yVal -= Input.mouseScrollDelta.y * scrollSpeed;
         yVal = Mathf.Clamp(yVal, maxZoom, minZoom);
 
         //dragging
@@ -43,7 +47,8 @@ public class CameraMovement : MonoBehaviour {
 
         StartCoroutine(SmoothZoom());
 
-        cam.transform.position = new Vector3(pos.x, yZoom, pos.z);
+        if ( !SSUI.UI_Canvas.enabled )
+            cam.transform.position = new Vector3(pos.x, yZoom, pos.z);
     }
 
     IEnumerator SmoothZoom() {

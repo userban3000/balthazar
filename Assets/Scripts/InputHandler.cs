@@ -33,7 +33,7 @@ public class InputHandler : MonoBehaviour {
 
         Debug.DrawRay(ray.origin, ray.direction*1000, Color.green);
 
-        if ( Physics.Raycast(ray.origin, ray.direction*1000, out hit, Mathf.Infinity, starSystemLayer ) && PointerIsOnScreen()) {
+        if ( Physics.Raycast(ray.origin, ray.direction*1000, out hit, Mathf.Infinity, starSystemLayer ) && PointerIsOnScreen() && !SSUI.UI_Canvas.enabled ) {
             GameObject modelGameObject = hit.collider.gameObject;
             hitSystem = modelGameObject.GetComponentInParent<StarSystem>() as StarSystem;
             isHovering = true;
@@ -41,7 +41,7 @@ public class InputHandler : MonoBehaviour {
             isHovering = false;
         }
 
-        if ( isHovering ) {
+        if ( isHovering || SSUI.UI_Canvas.enabled) {
             hitSystem.particle.Play();
             if ( Input.GetMouseButtonDown(0) ) {
                 SSUI.sys = hitSystem;

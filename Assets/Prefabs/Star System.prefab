@@ -140,7 +140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 798cd9f7e76265241977e934fcb3a2ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  systemName: Ayaya
+  systemName: Star System
   units: 0
   industryFactor: 1
   scienceFactor: 1

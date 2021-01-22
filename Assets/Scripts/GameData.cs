@@ -8,8 +8,7 @@ public static class GameData {
     private static Dictionary<string, int> scienceUnlocks = new Dictionary<string, int>();
 
     private static int systemNameCount;
-    private static string[] systemNames;
-    private static bool[] systemNameUsed;
+    public static string[] systemNames;
 
     public static Dictionary<string, int> GetAllScienceUnlocks() {
         return scienceUnlocks;
@@ -23,13 +22,16 @@ public static class GameData {
         scienceUnlocks = sci;
     }
 
-    public static string GetRandomUnusedSystemName() {
-        int a;
-        do {
-            a = Random.Range(0, systemNameCount);
-        } while ( systemNameUsed[a] );
-        systemNameUsed[a] = true;
-        return systemNames[a];
+    //fisher-yates
+    public static void ShuffleNames() {
+        int n = systemNames.Length;
+
+        for ( int i = n - 1; i > 0; i-- ) {
+            int j = Random.Range(0, i + 1);
+            string swapper = systemNames[i];
+            systemNames[i] = systemNames[j];
+            systemNames[j] = swapper;
+        }
     }
 
     public static void SetNames() {
@@ -42,17 +44,7 @@ public static class GameData {
         systemNames = new string[systemNameCount];
         systemNames = names.ToArray();
 
-        systemNameUsed = new bool[systemNameCount];
+        ShuffleNames();
     }
-
-    public static string GetRandomName() {
-        int a;
-        do {
-            a = Random.Range(0, systemNameCount);
-        } while ( systemNameUsed[a] );
-        systemNameUsed[a] = true;
-        return systemNames[a];
-    }
-
 
 }

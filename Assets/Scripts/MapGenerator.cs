@@ -143,11 +143,16 @@ public class MapGenerator : MonoBehaviour {
         MG_Debug_ClearWorld();
 
         List<LineInfo> drawnLines = new List<LineInfo>();
+        int nameToAdd = 0;
 
         foreach ( Node n in g.nodes ) {
             Vector3 vN = new Vector3 (10*n.coord.x, -100, 20*n.coord.y);
             GameObject star = Instantiate(systemPrefab, vN, Quaternion.identity) as GameObject;
-            star.name = "Star " + n.nodeID.ToString();
+            StarSystem system = star.GetComponent<StarSystem>();
+            if ( nameToAdd >= GameData.systemNames.Length )
+                system.systemName = star.name = "Star " + n.nodeID.ToString();
+            else
+                system.systemName = star.name = GameData.systemNames[nameToAdd++];
             star.transform.parent = systemHolder.transform;
 
             for ( int i = 0; i < 6; i++ ) {
