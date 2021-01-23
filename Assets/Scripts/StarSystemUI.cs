@@ -9,7 +9,8 @@ public class StarSystemUI : MonoBehaviour {
     public StarSystem sys;
 
     [Header("UI")]
-    public Canvas UI_Canvas;
+    public GameObject UI_SystemHolder;
+    public Text UI_SystemSelectionTooltip;
     public Text UI_Units;
     public Text UI_UnitGenStats;
     public Text UI_SystemName;
@@ -17,25 +18,25 @@ public class StarSystemUI : MonoBehaviour {
     public InputField UI_InputField;
     public int UTS_Link = -1;
 
-    private void Start() {
-        UI_Canvas.enabled = false;
+    private void Awake() {
+        UI_SystemHolder.SetActive(false);
+        UI_SystemSelectionTooltip.enabled = false;
     }
 
     public void OpenUI() {
-        UI_Canvas.enabled = true;
+        UI_SystemHolder.SetActive(true);
         UI_SystemName.text = sys.systemName;
-        UI_InputField.textComponent.text = null;
+        UI_InputField.textComponent.text = "0";
+        UI_Send.interactable = false;
     }
 
     public void CloseUI() {
-        UI_Canvas.enabled = false;
+        UI_SystemHolder.SetActive(false);
         UTS_Link = -1;
-        sys.particle.Clear();
-        sys.particle.Stop();
     }
 
     public void Update() {
-        if ( UI_Canvas.enabled ) {
+        if ( UI_SystemHolder.activeSelf ) {
             UI_Units.text = sys.units.ToString();
             UI_UnitGenStats.text = "(" + (sys.industryPerTick * 50).ToString() + " Ind/Sec, " + sys.industryToGenerateUnit.ToString() + " Ind/Unit)";
             
@@ -79,8 +80,12 @@ public class StarSystemUI : MonoBehaviour {
 
     public void SendArmy() {
         if ( UI_Send.interactable ) {
-            Debug.Log("Sent an army " + sys.unitsToSend.ToString() + " strong! The opponents fear us...");
+            //Debug.Log("Sent an army " + sys.unitsToSend.ToString() + " strong! The opponents fear us...");
             sys.units -= sys.unitsToSend;
+
+            Player player = FindObjectOfType<Player>();
+            CloseUI();
+            player.ChooseDir();
         }
     }
 }

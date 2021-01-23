@@ -5,24 +5,29 @@ using UnityEngine;
 public class Army : MonoBehaviour {
     
     public int speed;
-
-    public int health;
-    public int damage;
+    public int units;
 
     private void FixedUpdate() {
         Move();
     }
 
     private void Move() {
-        this.transform.position += Vector3.forward * speed / 100;
+        this.transform.position += transform.forward * speed / 100;
     }
 
     public void Set(int count, PlayerData pd) {
+        speed = 4;
+        units = count;
+    }
 
-        speed = 2;
-        health = 0;
-        damage = 0;
+    private void OnCollisionEnter(Collision col) {
+        if ( col.gameObject.CompareTag("Star System") ) {
+            
+        } else if ( col.gameObject.CompareTag("Army") ) {
 
+        } else {
+            throw new System.Exception("Army hit something that's neither a Star System, nor another Army. How did you even manage?");
+        }
     }
 
 }
