@@ -15,7 +15,7 @@ public class BalthazarGraphEditor : Editor {
         GUILayout.Space(20f);
         GUILayout.Label("Generation", EditorStyles.boldLabel);
 
-        if ( GUILayout.Button("Generate Graph" )) {
+        if ( GUILayout.Button("Generate Map" )) {
             map.GenerateMap();
         }
 
@@ -29,6 +29,10 @@ public class BalthazarGraphEditor : Editor {
 
         if ( GUILayout.Button("Lose Nodes" )) {
             map.MG_LoseNodes();
+        }
+
+        if ( GUILayout.Button("Assign Starter Systems")) {
+            map.MG_AssignStarterTeams(1);
         }
 
         GUILayout.Space(20f);

@@ -22,7 +22,7 @@ public static class GameData {
         scienceUnlocks = sci;
     }
 
-    //fisher-yates
+    //fisher-yates shuffle
     public static void ShuffleNames() {
         int n = systemNames.Length;
 

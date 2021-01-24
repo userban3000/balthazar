@@ -11,6 +11,8 @@ public class StarSystemUI : MonoBehaviour {
     [Header("UI")]
     public GameObject UI_SystemHolder;
     public Text UI_SystemSelectionTooltip;
+    public Text UI_SystemPreSelectionTooltip;
+    public Text UI_SystemObstructionTooltip;
     public Text UI_Units;
     public Text UI_UnitGenStats;
     public Text UI_SystemName;
@@ -18,9 +20,14 @@ public class StarSystemUI : MonoBehaviour {
     public InputField UI_InputField;
     public int UTS_Link = -1;
 
+    [Header("Team-Based Coloring")]
+    public Image namePanel;
+
     private void Awake() {
         UI_SystemHolder.SetActive(false);
         UI_SystemSelectionTooltip.enabled = false;
+        UI_SystemPreSelectionTooltip.enabled = false;
+        UI_SystemObstructionTooltip.enabled = false;
     }
 
     public void OpenUI() {
@@ -28,6 +35,8 @@ public class StarSystemUI : MonoBehaviour {
         UI_SystemName.text = sys.systemName;
         UI_InputField.textComponent.text = "0";
         UI_Send.interactable = false;
+        
+        namePanel.color = PlayerData.GetPlayerColor(sys.teamIndex);
     }
 
     public void CloseUI() {

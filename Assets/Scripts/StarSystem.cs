@@ -22,11 +22,18 @@ public class StarSystem : MonoBehaviour {
     public int unitsToSend;
 
     [Header("System Properties")]
+    public bool useTeamColoring;
     public int teamIndex;
     public int health;
 
     [Header("Effects")]
     public ParticleSystem particle;
+
+    public void UpdateTeam(int newTeamIndex) {
+        teamIndex = newTeamIndex;
+        Material mat = GetComponentInChildren<Renderer>().material;
+        mat.color = PlayerData.playerColors[teamIndex];
+    }
 
     private void FixedUpdate() {
         Tick(); 

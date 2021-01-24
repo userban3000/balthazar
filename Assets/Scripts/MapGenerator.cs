@@ -36,7 +36,10 @@ public struct LineInfo {
 }
 
 public class MapGenerator : MonoBehaviour {
-    
+
+    [Header("Editor Settings")]
+    public bool GenerateMapOnPlay;
+
     [Header("Seed")]
     public int seed;
     public bool randomSeed;
@@ -64,19 +67,27 @@ public class MapGenerator : MonoBehaviour {
     static readonly float[] connectivityEdgeDeletionsCoefficients = {0f, 0.44f, 1f, 1.28f, 1.34f, 1.78f};
     static readonly float[] connectivityNodeDeletionsCoefficients = {0f, 0.31f, 0.8f, 1.25f, 2.24f, 3.33f};
     Graph g;
+    int[] homeSystems;
 
     [Header("Display")]
     static readonly string[] sizeNames = MapSize.GetNames(typeof(MapSize));
     static readonly string[] conNames = Connectivity.GetNames(typeof(Connectivity));
 
+    private void Start() {
+        if ( GenerateMapOnPlay )
+            GenerateMap();
+    }
+
     public void GenerateMap() {
         //move these later
         GameData.SetScience();
         GameData.SetNames();
+        PlayerData.SetupPlayerData();
         
         MG_SetupNodes();
         MG_LoseEdges();
         MG_LoseNodes();
+        MG_AssignStarterTeams(1);
         MG_ConvertToWorldMap();
     }
 
@@ -149,24 +160,47 @@ public class MapGenerator : MonoBehaviour {
             Vector3 vN = new Vector3 (10*n.coord.x, -100, 20*n.coord.y);
             GameObject star = Instantiate(systemPrefab, vN, Quaternion.identity) as GameObject;
             StarSystem system = star.GetComponent<StarSystem>();
+
+            system.hasNeighbor = n.hasNeighbor;
+
             if ( nameToAdd >= GameData.systemNames.Length )
                 system.systemName = star.name = "Star " + n.nodeID.ToString();
             else
                 system.systemName = star.name = GameData.systemNames[nameToAdd++];
+
             star.transform.parent = systemHolder.transform;
+
+            system.UpdateTeam(0);
+
+            for ( int i = 1; i <= 8; i++ ) {
+                if ( homeSystems[i] == n.nodeID ) {
+                    system.UpdateTeam(i);
+                    Debug.Log("Team " + i.ToString() + "'s Home System is " + system.systemName);
+                }
+            }
 
             for ( int i = 0; i < 6; i++ ) {
                 if ( n.hasNeighbor[i] ) {
                     LineInfo l = new LineInfo( n.coord, n.coord + g.CoordFromNodeDir((NodeDir)i) );
                     bool alreadyExists = false;
                     foreach ( LineInfo dl in drawnLines ) {
-                        alreadyExists = dl == l;
+                        alreadyExists = dl == l || alreadyExists;
                     }
                     if ( !alreadyExists ) {
                         MG_Connect(n.coord, n.coord + g.CoordFromNodeDir((NodeDir)i));
+                        drawnLines.Add(l);
                     }
                 }
             }
+        }
+    }
+
+    public void MG_AssignStarterTeams(int players) {
+        homeSystems = new int[] {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+        for ( int i = 1; i <= players; i++ ) {
+            int a = Random.Range(0, g.nodes.Count);
+            Node n = g.nodes[a];
+            homeSystems[i] = n.nodeID;
         }
     }
 
