@@ -190,7 +190,7 @@ MonoBehaviour:
   industryFactor: 1
   scienceFactor: 1
   hasNeighbor: 000000000000
-  industryPerTick: 400
+  industryPerTick: 80
   industryToGenerateUnit: 1000
   industry: 0
   armyPrefab: {fileID: 421197460480055471, guid: a773ad22e433deb4c9be78cb382e1afc, type: 3}
@@ -199,7 +199,6 @@ MonoBehaviour:
   teamIndex: 0
   health: 1
   particle: {fileID: 4213869414232021991}
-  mat: {fileID: 0}
 --- !u!1 &4213869414232021988
 GameObject:
   m_ObjectHideFlags: 0

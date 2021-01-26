@@ -76,13 +76,14 @@ public class MapGenerator : MonoBehaviour {
     private void Start() {
         if ( GenerateMapOnPlay )
             GenerateMap();
+        PlayerData.SetupPlayerData(2);
     }
 
     public void GenerateMap() {
         //move these later
         GameData.SetScience();
         GameData.SetNames();
-        PlayerData.SetupPlayerData();
+        PlayerData.SetupPlayerData(2);
         
         MG_SetupNodes();
         MG_LoseEdges();

@@ -37,6 +37,10 @@ public class Army : MonoBehaviour {
             } else {
                 Debug.Log(units + " units attacked the enemy-controlled system " + sys.systemName);
                 sys.units -= units;
+                if ( sys.units < 0 ) {
+                    sys.units = -sys.units;
+                    sys.UpdateTeam(teamIndex);
+                }
                 Destroy(this.gameObject);
             }
 

@@ -41,7 +41,7 @@ public class Player : MonoBehaviour {
     private Vector3 dragOrigin;
     private Vector3 OnPlane;
     public bool isChoosingDirection = false;
-    public bool isHovering;
+    public bool isHovering = false;
     private StarSystem hoveredSystem;
     private StarSystem targetedSys;
 
