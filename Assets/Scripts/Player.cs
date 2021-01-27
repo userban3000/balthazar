@@ -13,7 +13,7 @@ public class Player : MonoBehaviour {
     public GameObject armyPrefab;
 
     [Header("UI")]
-    public StarSystemUI SSUI;
+    public HandlerUI HUI;
 
     [Header("Mouse & Input Settings")]
     public float dragSpeed;
@@ -43,6 +43,7 @@ public class Player : MonoBehaviour {
     public bool isChoosingDirection = false;
     public bool isHovering = false;
     private StarSystem hoveredSystem;
+    private int initialSystemTeam;
     private StarSystem targetedSys;
 
     [Header("Line Renderer")]
@@ -69,7 +70,7 @@ public class Player : MonoBehaviour {
         }
 
         //================================================================================ZOOMING
-        if ( !SSUI.UI_SystemHolder.activeSelf )
+        if ( !HUI.IsAnyWindowActive() )
             yWish -= Input.mouseScrollDelta.y * scrollSpeed;
         yWish = Mathf.Clamp(yWish, maxZoom, minZoom);
         tiltWish = CamTiltAtY(yWish);
@@ -85,7 +86,7 @@ public class Player : MonoBehaviour {
         float dist;
 
         //================================================================================SYSTEM SELECT DETECTION
-        if ( Physics.Raycast(camRay.origin, camRay.direction, out hit, Mathf.Infinity, starSystemHoverLayer ) && PointerIsOnScreen() && !SSUI.UI_SystemHolder.activeSelf && !isChoosingDirection ) {
+        if ( Physics.Raycast(camRay.origin, camRay.direction, out hit, Mathf.Infinity, starSystemHoverLayer ) && PointerIsOnScreen() && !HUI.IsAnyWindowActive() && !isChoosingDirection ) {
             GameObject modelGameObject = hit.collider.gameObject;
             hoveredSystem = modelGameObject.GetComponentInParent<StarSystem>() as StarSystem;
             isHovering = true;
@@ -94,21 +95,28 @@ public class Player : MonoBehaviour {
         }
 
         //================================================================================SYSTEM SELECT ANIMATION && CAPTURING MOUSE CLICK FOR UI OPEN
-        if ( isHovering || SSUI.UI_SystemHolder.activeSelf) {
+        if ( isHovering ) {
+
             hoveredSystem.particle.Play();
             if ( Input.GetMouseButtonDown(0) ) {
-                SSUI.sys = hoveredSystem;
-                SSUI.OpenUI();
+                HUI.Focus(hoveredSystem);
+                initialSystemTeam = hoveredSystem.teamIndex;
             }
         } else if ( hoveredSystem != null && !isChoosingDirection ) {
             hoveredSystem.particle.Clear();
             hoveredSystem.particle.Stop();
         }
 
+        //================================================================================UPDATE SYS OWNERSHIP
+        if ( HUI.IsAnyWindowActive() && hoveredSystem.teamIndex != initialSystemTeam ) {
+            HUI.Focus(hoveredSystem);
+        }
+
         //================================================================================CHOOSING DIR, AFTER SELECTING TO SEND UNITS
         if ( isChoosingDirection ) {
 
-            SSUI.UI_SystemObstructionTooltip.enabled = false;
+            //obstructed tooltip
+            //SSUI.UI_SystemObstructionTooltip.enabled = false;
 
             if ( gamePlane.Raycast(camRay, out dist)) {
                 OnPlane = camRay.GetPoint(dist);
@@ -123,15 +131,15 @@ public class Player : MonoBehaviour {
                 if ( fromPlanetHit.collider.transform.parent == fromCamHit.collider.transform.parent ) {
                     targetedSys = fromPlanetHit.collider.gameObject.GetComponentInParent<StarSystem>() as StarSystem;
                 } else {
-                    SSUI.UI_SystemObstructionTooltip.enabled = true;
+                    //SSUI.UI_SystemObstructionTooltip.enabled = true;
                 }
             }
 
             if ( targetedSys == null ) {
-                SSUI.UI_SystemPreSelectionTooltip.enabled = true;
+                //SSUI.UI_SystemPreSelectionTooltip.enabled = true;
             } else {
-                SSUI.UI_SystemPreSelectionTooltip.enabled = false;
-                SSUI.UI_SystemSelectionTooltip.enabled = true;
+                //SSUI.UI_SystemPreSelectionTooltip.enabled = false;
+                //SSUI.UI_SystemSelectionTooltip.enabled = true;
             }
 
             if ( hexDirections ) {
@@ -146,6 +154,7 @@ public class Player : MonoBehaviour {
 
             //confirming
             if ( Input.GetMouseButton(0) && targetedSys != null ) {
+                Debug.Log("from player" + hoveredSystem.unitsToSend.ToString());
                 GameObject armyGO = Instantiate(armyPrefab, hoveredSystem.transform.position + (targetedSys.transform.position - hoveredSystem.transform.position).normalized * 3.2f, Quaternion.LookRotation(targetedSys.transform.position - hoveredSystem.transform.position));
                 Army army = armyGO.GetComponent<Army>();
 
@@ -156,9 +165,8 @@ public class Player : MonoBehaviour {
 
                 targetedSys = null;
                 isChoosingDirection = false;
-                SSUI.UI_SystemHolder.SetActive(false);
-                SSUI.UI_SystemSelectionTooltip.enabled = false;
-                SSUI.UI_SystemObstructionTooltip.enabled = false;
+                //SSUI.UI_SystemSelectionTooltip.enabled = false;
+                //SSUI.UI_SystemObstructionTooltip.enabled = false;
                 Destroy(lr);
                 return;
             }
@@ -167,16 +175,16 @@ public class Player : MonoBehaviour {
             if ( Input.GetMouseButton(1) ) {
                 targetedSys = null;
                 isChoosingDirection = false;
-                SSUI.UI_SystemHolder.SetActive(false);
-                SSUI.UI_SystemSelectionTooltip.enabled = false;
-                SSUI.UI_SystemObstructionTooltip.enabled = false;
+                HUI.DisableCurrentlyActiveUI();
+                //SSUI.UI_SystemSelectionTooltip.enabled = false;
+                //SSUI.UI_SystemObstructionTooltip.enabled = false;
                 Destroy(lr);
                 return;
             }
         }
 
         //================================================================================CAMERA MOVEMENT
-        if ( !SSUI.UI_SystemHolder.activeSelf ) {
+        if ( !HUI.IsAnyWindowActive() ) {
             camHolder.transform.position = new Vector3(pos.x, yReal, pos.z );
             camHolder.transform.rotation = Quaternion.Euler(tiltReal, 0, 0);
             cam.transform.localPosition = new Vector3(0, 0, offsetReal);
